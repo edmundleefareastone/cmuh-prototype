@@ -128,6 +128,66 @@
       border-bottom: 1px solid #e0e8f0;
     }
 
+    /* ---- Category Table ---- */
+    .cat-table-wrap {
+      border: 1px solid #cdd8e3;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .cat-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .cat-table tr + tr > td {
+      border-top: 1px solid #dde6ef;
+    }
+    .cat-label-cell {
+      background: #e8f5e9;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2e7d32;
+      padding: 10px 8px;
+      border-right: 2px solid #cdd8e3;
+      vertical-align: middle;
+    }
+    .cat-radio-cell {
+      padding: 12px 14px;
+      vertical-align: middle;
+      white-space: nowrap;
+      border-right: 1px solid #dde6ef;
+      background: #f7f9fc;
+    }
+    .cat-content-cell {
+      padding: 10px 16px;
+      vertical-align: middle;
+    }
+    .cat-row-active > .cat-radio-cell { background: #fffde7; }
+    .cat-row-active > .cat-content-cell { background: #fafff5; }
+
+    .cat-sub-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .cat-sub-table tr + tr > td { border-top: 1px solid #ecf0f4; }
+    .cat-sub-table td { padding: 7px 12px; vertical-align: middle; }
+    .cat-sub-label-cell {
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 600;
+      color: #546e7a;
+      background: #eceff1;
+      padding: 7px 12px;
+      border-right: 1px solid #dde6ef;
+      width: 80px;
+    }
+    .cat-sub-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #546e7a;
+      white-space: nowrap;
+    }
+
     .dx-table {
       width: 100%;
       border-collapse: collapse;
@@ -508,59 +568,98 @@
         <!-- 3-1 類別 -->
         <div style="margin-bottom:22px;">
           <div class="inline-sub-header">3-1 類別</div>
-          <div class="field-label required" style="margin-bottom:10px;">
-            <span class="req-star">*</span> 類別選擇
-          </div>
-          <q-option-group v-model="form.category" :options="categoryOpts" type="radio" inline dense
-            style="margin-bottom:12px;"
-            @update:model-value="errors.category = ''" />
           <div v-if="errors.category" class="error-msg" style="margin-bottom:8px;">{{ errors.category }}</div>
 
-          <!-- 一般會診 -->
-          <div v-if="form.category === 'general'" class="subsection">
-            <div class="subsection-title">一般會診 — 照會資訊</div>
-            <div class="field-wrap" style="max-width:480px;">
-              <div class="field-label required">
-                <span class="req-star">*</span> 照會科別
-              </div>
-              <q-input v-model="form.generalDept" dense outlined
-                placeholder="請輸入科別，例如：內科、外科、耳鼻喉科"
-                :error="!!errors.generalDept" :error-message="errors.generalDept"
-                @update:model-value="errors.generalDept = ''" />
-            </div>
-          </div>
+          <div class="cat-table-wrap">
+            <table class="cat-table">
+              <colgroup>
+                <col style="width:72px;">
+                <col style="width:116px;">
+                <col>
+              </colgroup>
+              <tbody>
 
-          <!-- 急重症 -->
-          <div v-if="form.category === 'emergency'" class="subsection emergency">
-            <div class="subsection-title">急重症 — 詳細分類</div>
-            <div class="form-grid">
-              <div class="field-wrap">
-                <div class="field-label" style="margin-bottom:8px;">急診分類</div>
-                <q-option-group v-model="form.erCategory" :options="erCategoryOpts" type="radio" dense />
-              </div>
-              <div class="field-wrap">
-                <div class="field-label" style="margin-bottom:8px;">檢傷分類</div>
-                <q-option-group v-model="form.triageLevel" :options="triageOpts" type="radio" dense />
-              </div>
-              <div class="field-wrap">
-                <div class="field-label" style="margin-bottom:8px;">照會科別</div>
-                <q-option-group v-model="form.erDept" :options="erDeptOpts" type="radio" dense />
-              </div>
-            </div>
-          </div>
+                <!-- 一般會診 -->
+                <tr :class="form.category === 'general' ? 'cat-row-active' : ''">
+                  <td class="cat-label-cell" rowspan="3">
+                    <span class="req-star">*</span> 類別
+                  </td>
+                  <td class="cat-radio-cell">
+                    <div>
+                      <q-radio v-model="form.category" val="general" label="一般會診" dense
+                        @update:model-value="errors.category = ''" />
+                    </div>
+                  </td>
+                  <td class="cat-content-cell">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <span class="cat-sub-label">照會科別<span class="req-star" style="margin-left:2px;">*</span></span>
+                      <div style="flex:1;max-width:420px;">
+                        <q-input v-model="form.generalDept" dense outlined
+                          :disable="form.category !== 'general'"
+                          placeholder="例如：內科、外科、耳鼻喉科"
+                          :error="!!errors.generalDept" :error-message="errors.generalDept"
+                          :hide-bottom-space="!errors.generalDept"
+                          @update:model-value="errors.generalDept = ''" />
+                      </div>
+                    </div>
+                  </td>
+                </tr>
 
-          <!-- 其他 -->
-          <div v-if="form.category === 'other'" class="subsection">
-            <div class="subsection-title">其他類別 — 說明</div>
-            <div class="field-wrap" style="max-width:480px;">
-              <div class="field-label required">
-                <span class="req-star">*</span> 說明
-              </div>
-              <q-input v-model="form.otherCategoryNote" dense outlined
-                placeholder="類別為其他時，此欄位必填"
-                :error="!!errors.otherCategoryNote" :error-message="errors.otherCategoryNote"
-                @update:model-value="errors.otherCategoryNote = ''" />
-            </div>
+                <!-- 急重症 -->
+                <tr :class="form.category === 'emergency' ? 'cat-row-active' : ''">
+                  <td class="cat-radio-cell">
+                    <div>
+                      <q-radio v-model="form.category" val="emergency" label="急重症" dense
+                        @update:model-value="errors.category = ''" />
+                    </div>
+                  </td>
+                  <td class="cat-content-cell" style="padding:0;">
+                    <table class="cat-sub-table">
+                      <tr>
+                        <td class="cat-sub-label-cell">急診分類</td>
+                        <td>
+                          <q-option-group v-model="form.erCategory" :options="erCategoryOpts"
+                            type="radio" inline dense :disable="form.category !== 'emergency'" />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="cat-sub-label-cell">檢傷分類</td>
+                        <td>
+                          <q-option-group v-model="form.triageLevel" :options="triageOpts"
+                            type="radio" inline dense :disable="form.category !== 'emergency'" />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="cat-sub-label-cell">照會科別</td>
+                        <td>
+                          <q-option-group v-model="form.erDept" :options="erDeptOpts"
+                            type="radio" inline dense :disable="form.category !== 'emergency'" />
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- 其他 -->
+                <tr :class="form.category === 'other' ? 'cat-row-active' : ''">
+                  <td class="cat-radio-cell">
+                    <div>
+                      <q-radio v-model="form.category" val="other" label="其他" dense
+                        @update:model-value="errors.category = ''" />
+                    </div>
+                  </td>
+                  <td class="cat-content-cell">
+                    <q-input v-model="form.otherCategoryNote" dense outlined
+                      :disable="form.category !== 'other'"
+                      placeholder="類別為其他時，此欄位必填"
+                      :error="!!errors.otherCategoryNote" :error-message="errors.otherCategoryNote"
+                      :hide-bottom-space="!errors.otherCategoryNote"
+                      @update:model-value="errors.otherCategoryNote = ''" />
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
           </div>
         </div>
 
