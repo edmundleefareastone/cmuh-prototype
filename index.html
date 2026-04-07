@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遠距會診記錄單 — 中國醫藥大學附屬醫院</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@quasar/extras@1/material-icons/material-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/quasar@2/dist/quasar.prod.css" rel="stylesheet">
+
+  <style>
+    * { font-family: 'Noto Sans TC', sans-serif; box-sizing: border-box; }
+    body { background: #f0f2f5; margin: 0; padding-bottom: 88px; }
+
+    .page-header-bar {
+      background: linear-gradient(135deg, #1565C0, #1976D2);
+      color: white;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+    .page-header-bar .title { font-size: 18px; font-weight: 700; }
+    .page-header-bar .subtitle { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+    .doc-id-bar {
+      background: #fff8e1;
+      border-bottom: 1px solid #ffe082;
+      padding: 8px 32px;
+      font-size: 13px;
+      color: #5d4037;
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .doc-id-bar strong { color: #bf360c; }
+
+    .page-body {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px 24px;
+    }
+
+    .section-card {
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: #e8eef4;
+      padding: 11px 20px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #2c3e50;
+      border-bottom: 1px solid #cdd8e3;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-header .badge {
+      background: #607d8b;
+      color: white;
+      font-size: 11px;
+      font-weight: 400;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .section-readonly .section-header { background: #e0e0e0; color: #555; }
+    .section-readonly .section-body { background: #f9f9f9; }
+
+    .section-body { padding: 18px 20px; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .col-span-2 { grid-column: span 2; }
+    .col-span-3 { grid-column: span 3; }
+
+    .field-wrap { display: flex; flex-direction: column; }
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #546e7a;
+      margin-bottom: 5px;
+    }
+    .field-label.required {
+      background: #e8f5e9;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      width: fit-content;
+      margin-bottom: 6px;
+    }
+    .req-star { color: #c62828; font-weight: 700; }
+
+    .char-count {
+      font-size: 12px;
+      color: #90a4ae;
+      text-align: right;
+      margin-top: 3px;
+    }
+    .char-count.over { color: #d32f2f; font-weight: 600; }
+
+    .subsection {
+      background: #f7f9fc;
+      border: 1px solid #dce8f0;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-top: 10px;
+    }
+    .subsection.emergency { background: #fff8f0; border-color: #ffd180; }
+    .subsection-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #455a64;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e0e8f0;
+    }
+
+    .dx-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px 4px 6px;
+      border-radius: 16px;
+      margin: 3px;
+      font-size: 13px;
+      border: 1px solid #90caf9;
+      background: #e3f2fd;
+    }
+    .dx-chip.primary { background: #e8f5e9; border-color: #a5d6a7; }
+    .dx-badge {
+      background: #388e3c;
+      color: white;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-right: 6px;
+      font-weight: 500;
+    }
+
+    .vital-divider {
+      border: none;
+      border-top: 1px dashed #e0e0e0;
+      margin: 12px 0;
+    }
+
+    .action-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 14px 32px;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.12);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 100;
+      flex-wrap: wrap;
+    }
+    .action-bar .spacer { flex: 1; }
+
+    .fhir-preview {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 16px;
+      border-radius: 6px;
+      overflow: auto;
+      max-height: 60vh;
+      white-space: pre;
+      line-height: 1.5;
+    }
+
+    .error-msg { color: #d32f2f; font-size: 12px; margin-top: 4px; }
+
+    /* override Quasar label wrapping */
+    .q-field--dense .q-field__label { font-size: 13px; }
+
+    .readonly-field {
+      background: #eeeeee !important;
+    }
+
+    /* section inline sub-header */
+    .inline-sub-header {
+      background: #f0f4f8;
+      border-radius: 4px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #455a64;
+      margin-bottom: 14px;
+      border-left: 3px solid #90a4ae;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ======== Header ======== -->
+  <div class="page-header-bar">
+    <span class="material-icons" style="font-size:28px;">local_hospital</span>
+    <div>
+      <div class="title">遠距會診記錄單</div>
+      <div class="subtitle">中國醫藥大學附屬醫院 遠距醫療系統 — Demo 版</div>
+    </div>
+  </div>
+
+  <!-- ======== Doc ID Bar ======== -->
+  <div class="doc-id-bar">
+    <span><strong>文件編號：</strong>{{ documentId }}</span>
+    <span><strong>申請單位：</strong>北港附醫</span>
+    <span><strong>申請醫師：</strong>Demo 醫師</span>
+    <span v-if="submittedAt"><strong>送出時間：</strong>{{ submittedAt }}</span>
+  </div>
+
+  <!-- ======== Main Body ======== -->
+  <div class="page-body">
+
+    <!-- ===== Section 1: 病患資訊 ===== -->
+    <div class="section-card">
+      <div class="section-header">
+        <span class="material-icons" style="font-size:18px;color:#1976D2;">person</span>
+        Section 1：病患資訊
+        <span class="badge">申請會診單位填寫</span>
+      </div>
+      <div class="section-body">
+        <div class="form-grid">
+
+          <!-- 身分證字號 -->
+          <div class="field-wrap">
+            <div class="field-label required"><span class="req-star">*</span> 身分證字號</div>
+            <div>
+              <q-input v-model="form.idNumber" dense outlined
+                :placeholder="form.isForeigner ? '英數字 8–12 碼' : 'A123456789'"
+                :error="!!errors.idNumber" :error-message="errors.idNumber"
+                :hide-bottom-space="!errors.idNumber"
+                @update:model-value="errors.idNumber = ''" />
+            </div>
+            <div style="margin-top:2px;">
+              <q-checkbox v-model="form.isForeigner" label="外籍人士" dense size="sm" />
+            </div>
+          </div>
+
+          <!-- 病患姓名 -->
+          <div class="field-wrap">
+            <div class="field-label required"><span class="req-star">*</span> 病患姓名</div>
+            <div>
+              <q-input v-model="form.patientName" dense outlined
+                :disable="form.isAnonymous || form.isNewborn"
+                :error="!!errors.patientName" :error-message="errors.patientName"
+                :hide-bottom-space="!errors.patientName"
+                @update:model-value="errors.patientName = ''" />
+            </div>
+            <div style="display:flex;gap:12px;margin-top:2px;">
+              <div><q-checkbox v-model="form.isAnonymous" label="無名氏" dense size="sm" @update:model-value="onAnonymousChange" /></div>
+              <div><q-checkbox v-model="form.isNewborn" label="新生兒" dense size="sm" @update:model-value="onNewbornChange" /></div>
+            </div>
+          </div>
+
+          <!-- 病歷號碼 -->
+          <div class="field-wrap">
+            <div class="field-label required"><span class="req-star">*</span> 病歷號碼</div>
+            <q-input v-model="form.medicalRecordNo" dense outlined
+              :error="!!errors.medicalRecordNo" :error-message="errors.medicalRecordNo"
+              @update:model-value="errors.medicalRecordNo = ''" />
+          </div>
+
+          <!-- 出生日期 -->
+          <div class="field-wrap">
+            <div class="field-label required"><span class="req-star">*</span> 出生日期</div>
+            <q-input v-model="form.birthDate" type="date" dense outlined
+              :error="!!errors.birthDate" :error-message="errors.birthDate"
+              @update:model-value="errors.birthDate = ''" />
+          </div>
+
+          <!-- 年齡 -->
+          <div class="field-wrap">
+            <div class="field-label">年齡（自動計算）</div>
+            <q-input :model-value="ageDisplay" dense outlined readonly suffix="歲"
+              class="readonly-field" />
+          </div>
+
+          <!-- 性別 -->
+          <div class="field-wrap">
+            <div class="field-label">性別</div>
+            <q-select v-model="form.gender" dense outlined emit-value map-options
+              :options="genderOptions" />
+          </div>
+
+          <!-- 婚姻狀況 -->
+          <div class="field-wrap">
+            <div class="field-label">婚姻狀況</div>
+            <q-select v-model="form.maritalStatus" dense outlined emit-value map-options
+              :options="maritalOptions" />
+          </div>
+
+          <!-- 區域 -->
+          <div class="field-wrap">
+            <div class="field-label">區域</div>
+            <q-select v-model="form.locality" dense outlined emit-value map-options
+              :options="localityOptions" />
+          </div>
+
+          <!-- 初診日期 -->
+          <div class="field-wrap">
+            <div class="field-label">初診日期</div>
+            <q-input v-model="form.firstVisitDate" type="date" dense outlined />
+          </div>
+
+          <!-- 初診科別 -->
+          <div class="field-wrap">
+            <div class="field-label">初診科別</div>
+            <q-input v-model="form.firstVisitDepartment" dense outlined placeholder="例：耳鼻喉科" />
+          </div>
+
+          <!-- 電話 -->
+          <div class="field-wrap">
+            <div class="field-label">電話</div>
+            <q-input v-model="form.phone" dense outlined placeholder="0988-000-000" />
+          </div>
+
+          <!-- 地址 -->
+          <div class="field-wrap col-span-2">
+            <div class="field-label">地址</div>
+            <q-input v-model="form.address" dense outlined placeholder="縣市鄉鎮區路段…" />
+          </div>
+
+          <!-- 緊急聯絡人 -->
+          <div class="field-wrap">
+            <div class="field-label">緊急聯絡人</div>
+            <q-input v-model="form.ecName" dense outlined />
+          </div>
+
+          <!-- 關係 -->
+          <div class="field-wrap">
+            <div class="field-label">與病患關係</div>
+            <q-input v-model="form.ecRelation" dense outlined placeholder="例：配偶、子女" />
+          </div>
+
+          <!-- 緊急聯絡人電話 -->
+          <div class="field-wrap">
+            <div class="field-label">緊急聯絡人電話</div>
+            <q-input v-model="form.ecPhone" dense outlined />
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Section 2: 病人生活史 ===== -->
+    <div class="section-card">
+      <div class="section-header">
+        <span class="material-icons" style="font-size:18px;color:#1976D2;">history</span>
+        Section 2：病人生活史
+        <span class="badge">申請會診單位填寫</span>
+      </div>
+      <div class="section-body">
+        <div class="form-grid" style="margin-bottom:20px;">
+          <!-- 職業 -->
+          <div class="field-wrap">
+            <div class="field-label">職業</div>
+            <q-input v-model="form.occupation" dense outlined />
+          </div>
+
+          <!-- 就醫身份別 -->
+          <div class="field-wrap col-span-2">
+            <div class="field-label">就醫身份別</div>
+            <q-option-group v-model="form.coverageType" :options="coverageOpts" type="radio" inline dense style="margin-top:4px;" />
+          </div>
+        </div>
+
+        <!-- ICD-10 疾病診斷 -->
+        <div class="field-wrap">
+          <div class="field-label required" style="margin-bottom:8px;">
+            <span class="req-star">*</span> 疾病診斷（ICD-10）
+          </div>
+          <div style="font-size:12px;color:#888;margin-bottom:8px;">輸入代碼或中文名稱搜尋；可新增多筆；第一筆自動為主診斷。</div>
+
+          <!-- Selected chips -->
+          <div v-if="form.diagnoses.length" style="margin-bottom:10px;display:flex;flex-wrap:wrap;">
+            <div v-for="(dx, i) in form.diagnoses" :key="dx.code"
+              :class="['dx-chip', i === 0 ? 'primary' : '']">
+              <span v-if="i === 0" class="dx-badge">主診斷</span>
+              {{ dx.code }} — {{ dx.name_zh }}
+              <q-btn flat round dense size="xs" icon="close" style="margin-left:4px;"
+                @click="removeDx(i)" />
+            </div>
+          </div>
+          <div v-if="errors.diagnoses" class="error-msg">{{ errors.diagnoses }}</div>
+
+          <!-- Autocomplete -->
+          <q-select
+            v-model="icdSearchVal"
+            dense outlined
+            use-input hide-selected
+            input-debounce="0"
+            label="輸入 2 字以上搜尋 ICD-10 代碼或中文病名…"
+            :options="icdOptions"
+            option-label="display"
+            @filter="filterIcd"
+            @update:model-value="addDx"
+            style="max-width:640px;">
+            <template #option="scope">
+              <q-item v-bind="scope.itemProps">
+                <q-item-section>
+                  <q-item-label>{{ scope.opt.code }} — {{ scope.opt.name_zh }}</q-item-label>
+                  <q-item-label caption style="font-size:11px;">{{ scope.opt.name_en }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+            <template #no-option>
+              <q-item>
+                <q-item-section class="text-grey">無符合結果，請輸入 2 字以上</q-item-section>
+              </q-item>
+            </template>
+          </q-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Section 3: 會診說明 ===== -->
+    <div class="section-card">
+      <div class="section-header">
+        <span class="material-icons" style="font-size:18px;color:#1976D2;">description</span>
+        Section 3：會診說明
+        <span class="badge">申請會診單位填寫</span>
+      </div>
+      <div class="section-body">
+
+        <!-- 3-1 類別 -->
+        <div style="margin-bottom:22px;">
+          <div class="inline-sub-header">3-1 類別</div>
+          <div class="field-label required" style="margin-bottom:10px;">
+            <span class="req-star">*</span> 類別選擇
+          </div>
+          <q-option-group v-model="form.category" :options="categoryOpts" type="radio" inline dense
+            style="margin-bottom:12px;"
+            @update:model-value="errors.category = ''" />
+          <div v-if="errors.category" class="error-msg" style="margin-bottom:8px;">{{ errors.category }}</div>
+
+          <!-- 一般會診 -->
+          <div v-if="form.category === 'general'" class="subsection">
+            <div class="subsection-title">一般會診 — 照會資訊</div>
+            <div class="field-wrap" style="max-width:480px;">
+              <div class="field-label required">
+                <span class="req-star">*</span> 照會科別
+              </div>
+              <q-input v-model="form.generalDept" dense outlined
+                placeholder="請輸入科別，例如：內科、外科、耳鼻喉科"
+                :error="!!errors.generalDept" :error-message="errors.generalDept"
+                @update:model-value="errors.generalDept = ''" />
+            </div>
+          </div>
+
+          <!-- 急重症 -->
+          <div v-if="form.category === 'emergency'" class="subsection emergency">
+            <div class="subsection-title">急重症 — 詳細分類</div>
+            <div class="form-grid">
+              <div class="field-wrap">
+                <div class="field-label" style="margin-bottom:8px;">急診分類</div>
+                <q-option-group v-model="form.erCategory" :options="erCategoryOpts" type="radio" dense />
+              </div>
+              <div class="field-wrap">
+                <div class="field-label" style="margin-bottom:8px;">檢傷分類</div>
+                <q-option-group v-model="form.triageLevel" :options="triageOpts" type="radio" dense />
+              </div>
+              <div class="field-wrap">
+                <div class="field-label" style="margin-bottom:8px;">照會科別</div>
+                <q-option-group v-model="form.erDept" :options="erDeptOpts" type="radio" dense />
+              </div>
+            </div>
+          </div>
+
+          <!-- 其他 -->
+          <div v-if="form.category === 'other'" class="subsection">
+            <div class="subsection-title">其他類別 — 說明</div>
+            <div class="field-wrap" style="max-width:480px;">
+              <div class="field-label required">
+                <span class="req-star">*</span> 說明
+              </div>
+              <q-input v-model="form.otherCategoryNote" dense outlined
+                placeholder="類別為其他時，此欄位必填"
+                :error="!!errors.otherCategoryNote" :error-message="errors.otherCategoryNote"
+                @update:model-value="errors.otherCategoryNote = ''" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-2 病況描述 -->
+        <div style="margin-bottom:22px;">
+          <div class="inline-sub-header">3-2 病況描述</div>
+          <div class="field-label required" style="margin-bottom:6px;">
+            <span class="req-star">*</span> 病況描述
+          </div>
+          <q-input v-model="form.chiefComplaint" type="textarea" dense outlined rows="4"
+            :error="!!errors.chiefComplaint" :error-message="errors.chiefComplaint"
+            @update:model-value="errors.chiefComplaint = ''" />
+          <div :class="['char-count', form.chiefComplaint.length > 4000 ? 'over' : '']">
+            {{ form.chiefComplaint.length }} / 4000
+          </div>
+        </div>
+
+        <!-- 3-3 生命徵象 -->
+        <div style="margin-bottom:22px;">
+          <div class="inline-sub-header">3-3 生命徵象</div>
+          <div class="form-grid">
+            <div class="field-wrap">
+              <div class="field-label">血壓 — 收縮壓</div>
+              <q-input v-model.number="form.bpSystolic" type="number" dense outlined suffix="mmHg" />
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">血壓 — 舒張壓</div>
+              <q-input v-model.number="form.bpDiastolic" type="number" dense outlined suffix="mmHg" />
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">心跳</div>
+              <q-input v-model.number="form.heartRate" type="number" dense outlined suffix="次/分" />
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">呼吸頻率</div>
+              <q-input v-model.number="form.respirationRate" type="number" dense outlined suffix="次/分" />
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">體溫</div>
+              <q-input v-model.number="form.temperature" type="number" step="0.1" dense outlined suffix="°C" />
+            </div>
+            <div></div>
+
+            <hr class="vital-divider col-span-3" style="margin:4px 0 12px;" />
+
+            <div class="field-wrap">
+              <div class="field-label">GCS — 眼睛反應 (E)</div>
+              <q-select v-model="form.gcsE" dense outlined emit-value map-options :options="gcsEOpts" />
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">GCS — 語言反應 (V)</div>
+              <q-select v-model="form.gcsV" dense outlined emit-value map-options :options="gcsVOpts" />
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">GCS — 運動反應 (M)</div>
+              <q-select v-model="form.gcsM" dense outlined emit-value map-options :options="gcsMOpts" />
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">GCS 總分（自動加總）</div>
+              <q-input :model-value="gcsTotalDisplay" dense outlined readonly suffix="/ 15"
+                class="readonly-field" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-4 SOAP -->
+        <div style="margin-bottom:22px;">
+          <div class="inline-sub-header">3-4 SOAP 紀錄</div>
+          <div class="form-grid-2">
+            <div class="field-wrap">
+              <div class="field-label">S — 主訴（Subjective）</div>
+              <q-input v-model="form.subjective" type="textarea" dense outlined rows="5" />
+              <div :class="['char-count', form.subjective.length > 4000 ? 'over' : '']">
+                {{ form.subjective.length }} / 4000
+              </div>
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">O — 客觀（Objective）</div>
+              <q-input v-model="form.objective" type="textarea" dense outlined rows="5" />
+              <div :class="['char-count', form.objective.length > 3000 ? 'over' : '']">
+                {{ form.objective.length }} / 3000
+              </div>
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">A — 處置（Assessment）</div>
+              <q-input v-model="form.assessment" type="textarea" dense outlined rows="4" />
+              <div :class="['char-count', form.assessment.length > 2000 ? 'over' : '']">
+                {{ form.assessment.length }} / 2000
+              </div>
+            </div>
+            <div class="field-wrap">
+              <div class="field-label">P — 計畫（Plan）</div>
+              <q-input v-model="form.plan" type="textarea" dense outlined rows="4" />
+              <div :class="['char-count', form.plan.length > 2000 ? 'over' : '']">
+                {{ form.plan.length }} / 2000
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-5 備註 -->
+        <div style="margin-bottom:22px;">
+          <div class="inline-sub-header">3-5 備註</div>
+          <div class="field-wrap">
+            <div class="field-label">備註</div>
+            <q-input v-model="form.notes" type="textarea" dense outlined rows="3" />
+            <div :class="['char-count', form.notes.length > 4000 ? 'over' : '']">
+              {{ form.notes.length }} / 4000
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-6 會診目的 -->
+        <div>
+          <div class="inline-sub-header">3-6 會診目的</div>
+          <div class="form-grid">
+            <div class="field-wrap">
+              <div class="field-label required" style="margin-bottom:10px;">
+                <span class="req-star">*</span> 目的
+              </div>
+              <q-option-group v-model="form.purpose" :options="purposeOpts" type="radio" inline dense
+                @update:model-value="errors.purpose = ''" />
+              <div v-if="errors.purpose" class="error-msg">{{ errors.purpose }}</div>
+              <div v-if="form.purpose === 'other'" style="margin-top:8px;">
+                <q-input v-model="form.purposeOther" dense outlined
+                  placeholder="請說明會診目的"
+                  :error="!!errors.purposeOther" :error-message="errors.purposeOther"
+                  @update:model-value="errors.purposeOther = ''" />
+              </div>
+            </div>
+
+            <div class="field-wrap col-span-2">
+              <div class="field-label required" style="margin-bottom:6px;">
+                <span class="req-star">*</span> 會診單位
+              </div>
+              <q-select
+                v-model="form.targetUnits"
+                multiple dense outlined
+                use-chips
+                :options="consultationUnits"
+                :error="!!errors.targetUnits" :error-message="errors.targetUnits"
+                @update:model-value="errors.targetUnits = ''"
+                label="選擇會診單位（可多選）" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== Section 5: 會診紀錄（指導端，申請端唯讀）===== -->
+    <div class="section-card section-readonly">
+      <div class="section-header">
+        <span class="material-icons" style="font-size:18px;color:#607d8b;">rate_review</span>
+        Section 5：會診紀錄
+        <span class="badge">指導端填寫</span>
+        <span style="font-size:12px;color:#777;font-weight:400;margin-left:4px;">（申請端唯讀）</span>
+      </div>
+      <div class="section-body section-readonly">
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="field-wrap">
+            <div class="field-label">會診醫師</div>
+            <q-input :model-value="form.consultationDoctor" dense outlined readonly class="readonly-field" />
+          </div>
+          <div class="field-wrap">
+            <div class="field-label">會診單位</div>
+            <q-input :model-value="form.consultationUnit" dense outlined readonly class="readonly-field" />
+          </div>
+          <div></div>
+
+          <div class="field-wrap col-span-3">
+            <div class="field-label">會診紀錄（唯讀）</div>
+            <q-input
+              :model-value="form.consultationRecord || '（待指導端填寫）'"
+              type="textarea" dense outlined readonly rows="4" class="readonly-field" />
+          </div>
+
+          <div class="field-wrap col-span-3">
+            <div class="field-label">後續建議處理（唯讀）</div>
+            <div style="padding:10px 14px;border:1px solid #e0e0e0;border-radius:4px;background:#eeeeee;font-size:13px;color:#777;">
+              {{ form.followUpSuggestion || '（待指導端填寫）' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end page-body -->
+
+  <!-- ======== Action Bar ======== -->
+  <div class="action-bar">
+    <div><q-btn outline label="返回" @click="goBack" style="border-color:#aaa;" /></div>
+    <div><q-btn outline label="清除表單" @click="clearForm" style="border-color:#aaa;" /></div>
+    <div><q-btn color="negative" label="會診單刪除" @click="deleteForm" /></div>
+    <div><q-btn outline icon="auto_fix_high" label="填入 Demo 資料" @click="fillDemo" style="border-color:#9c27b0;color:#9c27b0;" /></div>
+    <div class="spacer"></div>
+    <div>
+      <q-btn color="primary"
+        :icon="submitted ? 'check' : 'send'"
+        :label="submitted ? '已送出' : '確認送出'"
+        :disable="submitted"
+        @click="submitForm" />
+    </div>
+    <template v-if="submitted">
+      <div><q-btn color="positive" icon="download" label="匯出 JSON" @click="exportJson" /></div>
+      <div><q-btn color="positive" icon="download" label="匯出 XML" @click="exportXml" /></div>
+      <div><q-btn style="background:#00897B;color:white;" icon="preview" label="FHIR R4 預覽" @click="showFhirModal = true" /></div>
+    </template>
+  </div>
+
+  <!-- ======== FHIR Modal ======== -->
+  <q-dialog v-model="showFhirModal" full-width>
+    <q-card style="max-width:900px;width:100%;margin:0 auto;">
+      <q-card-section style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;">
+        <div style="font-size:17px;font-weight:700;">HL7 FHIR R4 Bundle 預覽</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div><q-btn outline size="sm" icon="content_copy" label="複製" @click="copyFhir" /></div>
+          <div><q-btn flat round icon="close" v-close-popup /></div>
+        </div>
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <pre class="fhir-preview">{{ fhirJsonStr }}</pre>
+        <div style="margin-top:12px;padding:10px 14px;background:#fff3e0;border-radius:6px;font-size:12px;color:#bf360c;line-height:1.6;">
+          ⚠️ 此為 HL7 FHIR R4 格式轉換示意版本。正式系統對接時，將依目標 HIS 規格調整 Resource profile、Identifier system 及 Extension URL，並進行 FHIR Conformance 驗證。
+        </div>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+
+</div><!-- end #app -->
+
+<script src="icd10_common.js"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quasar@2/dist/quasar.umd.prod.js"></script>
+<script>
+const { createApp, ref, computed } = Vue;
+
+// ---- helpers ----
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function nowTaipei() {
+  // Return ISO 8601 with +08:00
+  const now = new Date();
+  const offset = 8 * 60;
+  const local = new Date(now.getTime() + (offset - now.getTimezoneOffset()) * 60000);
+  const Y = local.getUTCFullYear();
+  const M = pad2(local.getUTCMonth() + 1);
+  const D = pad2(local.getUTCDate());
+  const h = pad2(local.getUTCHours());
+  const m = pad2(local.getUTCMinutes());
+  const s = pad2(local.getUTCSeconds());
+  return { iso: `${Y}-${M}-${D}T${h}:${m}:${s}+08:00`, compact: `${Y}${M}${D}-${h}${m}${s}` };
+}
+
+function makeDocId(idNum) {
+  const { compact } = nowTaipei();
+  return `${compact}-${idNum || 'PENDING'}`;
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toXmlNode(key, val, indent = 1) {
+  const tag = key.charAt(0).toUpperCase() + key.slice(1);
+  const pad = '  '.repeat(indent);
+  const padInner = '  '.repeat(indent + 1);
+
+  if (val === null || val === undefined) return `${pad}<${tag}/>`;
+  if (typeof val === 'boolean') return `${pad}<${tag}>${val}</${tag}>`;
+
+  if (Array.isArray(val)) {
+    const singular = tag.endsWith('s') ? tag.slice(0, -1) : tag + 'Item';
+    const items = val.map(v =>
+      typeof v === 'object' && v !== null
+        ? `${padInner}<${singular}>\n${Object.entries(v).map(([k2,v2]) => toXmlNode(k2, v2, indent + 2)).join('\n')}\n${padInner}</${singular}>`
+        : `${padInner}<${singular}>${esc(v)}</${singular}>`
+    ).join('\n');
+    return `${pad}<${tag}>\n${items}\n${pad}</${tag}>`;
+  }
+
+  if (typeof val === 'object') {
+    const children = Object.entries(val).map(([k2,v2]) => toXmlNode(k2, v2, indent + 1)).join('\n');
+    return `${pad}<${tag}>\n${children}\n${pad}</${tag}>`;
+  }
+
+  return `${pad}<${tag}>${esc(val)}</${tag}>`;
+}
+
+// ---- App ----
+const App = {
+  setup() {
+    const $q = Quasar.useQuasar();
+
+    // ---- state ----
+    const documentId = ref(makeDocId(''));
+    const submittedAt = ref('');
+    const submitted = ref(false);
+    const showFhirModal = ref(false);
+    const fhirJsonStr = ref('');
+    const errors = ref({});
+    const icdSearchVal = ref(null);
+    const icdOptions = ref([]);
+
+    const emptyForm = () => ({
+      // Section 1
+      idNumber: '', isForeigner: false,
+      patientName: '', isAnonymous: false, isNewborn: false,
+      medicalRecordNo: '',
+      birthDate: '',
+      gender: null, maritalStatus: null, locality: null,
+      firstVisitDate: '', firstVisitDepartment: '',
+      phone: '', address: '',
+      ecName: '', ecRelation: '', ecPhone: '',
+      // Section 2
+      occupation: '', coverageType: null, diagnoses: [],
+      // Section 3
+      category: null,
+      generalDept: '',
+      erCategory: null, triageLevel: null, erDept: null,
+      otherCategoryNote: '',
+      chiefComplaint: '',
+      bpSystolic: null, bpDiastolic: null, heartRate: null,
+      respirationRate: null, temperature: null,
+      gcsE: null, gcsV: null, gcsM: null,
+      subjective: '', objective: '', assessment: '', plan: '',
+      notes: '',
+      purpose: null, purposeOther: '',
+      targetUnits: [],
+      // Section 5 (read-only defaults)
+      consultationDoctor: '中附醫 Demo 醫師',
+      consultationUnit: '中國醫藥大學附屬醫院',
+      consultationRecord: '',
+      followUpSuggestion: null,
+      followUpOther: '',
+    });
+
+    const form = ref(emptyForm());
+
+    // ---- computed ----
+    const ageDisplay = computed(() => {
+      if (!form.value.birthDate) return '';
+      const birth = new Date(form.value.birthDate);
+      if (isNaN(birth)) return '';
+      const today = new Date();
+      const yrs = Math.floor((today - birth) / (365.25 * 864e5));
+      return yrs >= 0 ? String(yrs) : '';
+    });
+
+    const gcsTotalDisplay = computed(() => {
+      const e = form.value.gcsE || 0;
+      const v = form.value.gcsV || 0;
+      const m = form.value.gcsM || 0;
+      if (!e && !v && !m) return '';
+      return String(e + v + m);
+    });
+
+    // ---- option lists ----
+    const genderOptions = [
+      { label: '男', value: 'male' },
+      { label: '女', value: 'female' },
+      { label: '其他', value: 'other' },
+      { label: '未知', value: 'unknown' },
+    ];
+    const maritalOptions = [
+      { label: '未婚', value: 'single' },
+      { label: '已婚', value: 'married' },
+      { label: '其他', value: 'other' },
+      { label: '未知', value: 'unknown' },
+    ];
+    const localityOptions = [
+      { label: '本地', value: 'local' },
+      { label: '外來', value: 'nonlocal' },
+      { label: '未知', value: 'unknown' },
+    ];
+    const gcsEOpts = [
+      { label: '1 — 無反應', value: 1 },
+      { label: '2 — 對疼痛有反應', value: 2 },
+      { label: '3 — 對聲音有反應', value: 3 },
+      { label: '4 — 自發性睜眼', value: 4 },
+    ];
+    const gcsVOpts = [
+      { label: '1 — 無聲音', value: 1 },
+      { label: '2 — 發出聲音', value: 2 },
+      { label: '3 — 說出字詞', value: 3 },
+      { label: '4 — 語句混亂', value: 4 },
+      { label: '5 — 正常交談', value: 5 },
+    ];
+    const gcsMOpts = [
+      { label: '1 — 無反應', value: 1 },
+      { label: '2 — 去大腦硬直', value: 2 },
+      { label: '3 — 去皮質硬直', value: 3 },
+      { label: '4 — 迴避動作', value: 4 },
+      { label: '5 — 定位動作', value: 5 },
+      { label: '6 — 遵從指令', value: 6 },
+    ];
+    const consultationUnits = [
+      '中國醫藥大學附屬醫院',
+      '國立臺灣大學醫學院附設醫院雲林分院斗六院區',
+      '彰化基督教醫療財團法人彰化基督教醫院',
+    ];
+
+    const coverageOpts = [
+      { label: '健保', value: 'nhis' },
+      { label: '自費', value: 'self' },
+      { label: '其他', value: 'other' },
+    ];
+    const categoryOpts = [
+      { label: '一般會診', value: 'general' },
+      { label: '急重症', value: 'emergency' },
+      { label: '其他', value: 'other' },
+    ];
+    const erCategoryOpts = [
+      { label: '急診', value: 'er' },
+      { label: '急性腦中風', value: 'stroke' },
+      { label: '緊急外傷', value: 'trauma' },
+      { label: '心肌梗塞', value: 'mi' },
+      { label: '其他', value: 'er_other' },
+    ];
+    const triageOpts = [
+      { label: '第一級', value: '1' },
+      { label: '第二級', value: '2' },
+      { label: '第三級', value: '3' },
+      { label: '第四級', value: '4' },
+      { label: '第五級', value: '5' },
+    ];
+    const erDeptOpts = [
+      { label: '急診內科', value: 'er_internal' },
+      { label: '急診外傷', value: 'er_surgery' },
+      { label: '急診兒科', value: 'er_pediatric' },
+      { label: '急診其他科', value: 'er_other_dept' },
+    ];
+    const purposeOpts = [
+      { label: '第二意見', value: 'second_opinion' },
+      { label: '轉診', value: 'referral' },
+      { label: '其他', value: 'other' },
+    ];
+
+    // ---- ICD-10 ----
+    function filterIcd(val, update) {
+      if (!val || val.length < 2) {
+        update(() => { icdOptions.value = []; });
+        return;
+      }
+      const q = val.toLowerCase();
+      update(() => {
+        icdOptions.value = ICD10_LIST
+          .filter(d =>
+            d.code.toLowerCase().startsWith(q) ||
+            d.name_zh.includes(val) ||
+            d.name_en.toLowerCase().includes(q)
+          )
+          .slice(0, 60)
+          .map(d => ({ ...d, display: `${d.code} — ${d.name_zh}` }));
+      });
+    }
+
+    function addDx(val) {
+      if (!val) return;
+      if (!form.value.diagnoses.some(d => d.code === val.code)) {
+        form.value.diagnoses.push({
+          code: val.code,
+          name_zh: val.name_zh,
+          name_en: val.name_en,
+          isPrimary: form.value.diagnoses.length === 0,
+        });
+        if (errors.value.diagnoses) errors.value.diagnoses = '';
+      }
+      icdSearchVal.value = null;
+    }
+
+    function removeDx(i) {
+      form.value.diagnoses.splice(i, 1);
+    }
+
+    // ---- checkbox handlers ----
+    function onAnonymousChange(v) {
+      if (v) { form.value.isNewborn = false; form.value.patientName = '無名氏'; }
+      else { form.value.patientName = ''; }
+    }
+    function onNewbornChange(v) {
+      if (v) { form.value.isAnonymous = false; form.value.patientName = '新生兒'; }
+      else { form.value.patientName = ''; }
+    }
+
+    // ---- validation ----
+    function validate() {
+      const e = {};
+      const f = form.value;
+
+      // idNumber
+      if (!f.idNumber) {
+        e.idNumber = '身分證字號為必填';
+      } else if (f.isForeigner) {
+        if (!/^[A-Za-z0-9]{8,12}$/.test(f.idNumber)) e.idNumber = '外籍人士請輸入 8–12 碼英數字';
+      } else {
+        if (!/^[A-Z][12]\d{8}$/.test(f.idNumber)) e.idNumber = '格式錯誤，例：A123456789';
+      }
+
+      // patientName
+      if (!f.isAnonymous && !f.isNewborn && !f.patientName.trim()) {
+        e.patientName = '病患姓名為必填';
+      }
+
+      // medicalRecordNo
+      if (!f.medicalRecordNo.trim()) e.medicalRecordNo = '病歷號碼為必填';
+
+      // birthDate
+      if (!f.birthDate) {
+        e.birthDate = '出生日期為必填';
+      } else if (new Date(f.birthDate) > new Date()) {
+        e.birthDate = '出生日期不可為未來日期';
+      }
+
+      // diagnoses
+      if (f.diagnoses.length === 0) e.diagnoses = '請至少輸入一筆疾病診斷';
+
+      // category
+      if (!f.category) {
+        e.category = '請選擇類別';
+      } else if (f.category === 'general' && !f.generalDept.trim()) {
+        e.generalDept = '照會科別為必填';
+      } else if (f.category === 'other' && !f.otherCategoryNote.trim()) {
+        e.otherCategoryNote = '請說明類別';
+      }
+
+      // chiefComplaint
+      if (!f.chiefComplaint.trim()) e.chiefComplaint = '病況描述為必填';
+
+      // purpose
+      if (!f.purpose) {
+        e.purpose = '請選擇會診目的';
+      } else if (f.purpose === 'other' && !f.purposeOther.trim()) {
+        e.purposeOther = '請說明會診目的';
+      }
+
+      // targetUnits
+      if (!f.targetUnits || f.targetUnits.length === 0) e.targetUnits = '請至少選擇一個會診單位';
+
+      return e;
+    }
+
+    // ---- actions ----
+    function submitForm() {
+      const errs = validate();
+      errors.value = errs;
+      if (Object.keys(errs).length > 0) {
+        $q.notify({ type: 'negative', message: '請填寫所有必填欄位', position: 'top-right', timeout: 3000 });
+        setTimeout(() => {
+          const el = document.querySelector('.q-field--error');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        return;
+      }
+      const ts = nowTaipei();
+      submittedAt.value = ts.iso;
+      documentId.value = `${ts.compact}-${form.value.idNumber}`;
+      submitted.value = true;
+      fhirJsonStr.value = JSON.stringify(buildFhir(), null, 2);
+      $q.notify({ type: 'positive', message: '會診單已送出！請下載 JSON / XML 或預覽 FHIR R4', position: 'top-right', timeout: 4000 });
+    }
+
+    function clearForm() {
+      if (!confirm('確定要清除所有欄位嗎？')) return;
+      form.value = emptyForm();
+      errors.value = {};
+      submitted.value = false;
+      submittedAt.value = '';
+      documentId.value = makeDocId('');
+      $q.notify({ type: 'info', message: '表單已清除', position: 'top-right' });
+    }
+
+    function deleteForm() {
+      if (!confirm('確定要刪除此會診單嗎？此操作無法復原。')) return;
+      form.value = emptyForm();
+      errors.value = {};
+      submitted.value = false;
+      submittedAt.value = '';
+      documentId.value = makeDocId('');
+      $q.notify({ type: 'negative', message: '已刪除', position: 'top-right' });
+    }
+
+    function goBack() { window.history.back(); }
+
+    // ---- fill demo data ----
+    function fillDemo() {
+      const demoPatients = [
+        { name: '王大明', id: 'A123456789', birth: '1975-08-15', gender: 'male',   mrn: 'P20241001', phone: '0912-345-678', addr: '雲林縣北港鎮中山路88號', ecName: '王小美', ecRel: '配偶',   ecPhone: '0923-456-789', occupation: '農業', marital: 'married' },
+        { name: '林淑芬', id: 'B234567890', birth: '1982-03-22', gender: 'female', mrn: 'P20241088', phone: '0936-111-222', addr: '嘉義縣朴子市中正路12號', ecName: '林建志', ecRel: '子女',   ecPhone: '0987-654-321', occupation: '教師', marital: 'married' },
+        { name: '陳志豪', id: 'C345678901', birth: '1960-11-08', gender: 'male',   mrn: 'P20241155', phone: '0955-888-777', addr: '彰化縣員林市員東路5號',   ecName: '陳美華', ecRel: '配偶',   ecPhone: '0966-777-888', occupation: '退休', marital: 'married' },
+        { name: '張雅婷', id: 'D456789012', birth: '1995-06-30', gender: 'female', mrn: 'P20241203', phone: '0901-234-567', addr: '台中市西屯區台灣大道三段200號', ecName: '張國強', ecRel: '父母', ecPhone: '0922-333-444', occupation: '上班族', marital: 'single' },
+      ];
+      const p = demoPatients[Math.floor(Math.random() * demoPatients.length)];
+
+      const demoDx = [
+        { code: 'J30.0', name_zh: '血管舒縮性鼻炎',   name_en: 'Vasomotor rhinitis' },
+        { code: 'I10',   name_zh: '原發性高血壓',       name_en: 'Essential hypertension' },
+        { code: 'E11.9', name_zh: '第二型糖尿病（無併發症）', name_en: 'Type 2 diabetes mellitus without complications' },
+        { code: 'K21.0', name_zh: '胃食道逆流合併食道炎', name_en: 'Gastro-oesophageal reflux disease with oesophagitis' },
+        { code: 'M54.5', name_zh: '下背痛',             name_en: 'Low back pain' },
+        { code: 'J06.9', name_zh: '急性上呼吸道感染',   name_en: 'Acute upper respiratory infection, unspecified' },
+      ];
+      const primaryDx = demoDx[Math.floor(Math.random() * demoDx.length)];
+      const secondaryDx = demoDx.filter(d => d.code !== primaryDx.code)[Math.floor(Math.random() * (demoDx.length - 1))];
+
+      const demoComplaints = [
+        '病患主訴近兩週持續頭痛、頭暈，伴隨輕微噁心感，服藥後症狀未見明顯改善，家屬表示日常生活已受影響，請求進一步評估與治療建議。',
+        '病患因胸悶、心悸症狀持續三天就診，活動後加劇，休息後稍緩，無胸痛，血壓偏高（160/95 mmHg），心電圖顯示 ST 段輕微壓低，請求心臟科會診。',
+        '病患有長期糖尿病史（10年），近期血糖控制不佳（空腹血糖 > 200 mg/dL），出現手腳麻木感，懷疑周邊神經病變，請求內分泌科協助評估調整用藥。',
+      ];
+
+      const demoSOAP = {
+        s: '病患自訴症狀已持續約兩週，以頭痛、頭暈為主，夜間較為明顯，影響睡眠品質。否認發燒、嘔吐。',
+        o: `BP: ${80 + Math.floor(Math.random()*40) + 120}/${60 + Math.floor(Math.random()*20)}mmHg，HR: ${65 + Math.floor(Math.random()*20)} bpm，體溫：36.${Math.floor(Math.random()*9)}°C，神智清楚，對答切題。`,
+        a: '依目前症狀及生命徵象，懷疑為高血壓合併頭暈，需排除中樞神經系統問題。',
+        p: '建議進行頭部 CT 掃描、血液常規及生化檢查，並請神經內科或相關科別協助評估。',
+      };
+
+      const depts = ['神經內科', '心臟內科', '腸胃科', '內分泌科', '耳鼻喉科', '骨科'];
+      const dept = depts[Math.floor(Math.random() * depts.length)];
+
+      const bp = { s: 110 + Math.floor(Math.random()*40), d: 65 + Math.floor(Math.random()*25) };
+      const hr = 60 + Math.floor(Math.random() * 40);
+      const temp = (36 + Math.random()).toFixed(1);
+
+      form.value = {
+        ...form.value,
+        // Section 1
+        idNumber: p.id,
+        isForeigner: false,
+        patientName: p.name,
+        isAnonymous: false,
+        isNewborn: false,
+        medicalRecordNo: p.mrn,
+        birthDate: p.birth,
+        gender: p.gender,
+        maritalStatus: p.marital,
+        locality: 'local',
+        firstVisitDate: '2026-04-01',
+        firstVisitDepartment: '一般內科',
+        phone: p.phone,
+        address: p.addr,
+        ecName: p.ecName,
+        ecRelation: p.ecRel,
+        ecPhone: p.ecPhone,
+        // Section 2
+        occupation: p.occupation,
+        coverageType: 'nhis',
+        diagnoses: [
+          { ...primaryDx, isPrimary: true },
+          { ...secondaryDx, isPrimary: false },
+        ],
+        // Section 3
+        category: 'general',
+        generalDept: dept,
+        chiefComplaint: demoComplaints[Math.floor(Math.random() * demoComplaints.length)],
+        bpSystolic: bp.s,
+        bpDiastolic: bp.d,
+        heartRate: hr,
+        respirationRate: 16 + Math.floor(Math.random() * 4),
+        temperature: Number(temp),
+        gcsE: 4,
+        gcsV: 5,
+        gcsM: 6,
+        subjective: demoSOAP.s,
+        objective: demoSOAP.o,
+        assessment: demoSOAP.a,
+        plan: demoSOAP.p,
+        notes: '',
+        purpose: 'second_opinion',
+        purposeOther: '',
+        targetUnits: ['中國醫藥大學附屬醫院'],
+      };
+
+      errors.value = {};
+      $q.notify({ type: 'info', message: `已填入 Demo 資料（${p.name}）`, position: 'top-right' });
+    }
+
+    // ---- export helpers ----
+    function buildExportData() {
+      const f = form.value;
+      const purposeMap = { second_opinion: '第二意見', referral: '轉診', other: '其他' };
+      return {
+        documentId: documentId.value,
+        createdAt: submittedAt.value,
+        submittedBy: { unit: '北港附醫', doctor: 'Demo 醫師' },
+        patient: {
+          name: f.patientName,
+          idNumber: f.idNumber,
+          isForeigner: f.isForeigner,
+          isAnonymous: f.isAnonymous,
+          isNewborn: f.isNewborn,
+          medicalRecordNo: f.medicalRecordNo,
+          birthDate: f.birthDate,
+          age: ageDisplay.value !== '' ? Number(ageDisplay.value) : null,
+          gender: f.gender,
+          maritalStatus: f.maritalStatus,
+          locality: f.locality,
+          firstVisitDate: f.firstVisitDate || null,
+          firstVisitDepartment: f.firstVisitDepartment || null,
+          phone: f.phone || null,
+          address: f.address || null,
+          emergencyContact: {
+            name: f.ecName || null,
+            relationship: f.ecRelation || null,
+            phone: f.ecPhone || null,
+          },
+        },
+        lifeHistory: {
+          occupation: f.occupation || null,
+          coverageType: f.coverageType,
+          diagnoses: f.diagnoses.map((d, i) => ({
+            code: d.code, name_zh: d.name_zh, isPrimary: i === 0,
+          })),
+        },
+        consultation: {
+          category: f.category,
+          subCategory: f.category === 'general'
+            ? { department: f.generalDept }
+            : f.category === 'emergency'
+            ? { emergencyCategory: f.erCategory, triageLevel: f.triageLevel, department: f.erDept }
+            : { note: f.otherCategoryNote },
+          chiefComplaint: f.chiefComplaint,
+          vitalSigns: {
+            bpSystolic: f.bpSystolic, bpDiastolic: f.bpDiastolic,
+            heartRate: f.heartRate, respirationRate: f.respirationRate,
+            temperature: f.temperature,
+            gcs: { eye: f.gcsE, verbal: f.gcsV, motor: f.gcsM,
+              total: gcsTotalDisplay.value !== '' ? Number(gcsTotalDisplay.value) : null },
+          },
+          soap: {
+            subjective: f.subjective, objective: f.objective,
+            assessment: f.assessment, plan: f.plan,
+          },
+          notes: f.notes || null,
+          purpose: f.purpose,
+          purposeLabel: purposeMap[f.purpose] || null,
+          purposeOther: f.purpose === 'other' ? f.purposeOther : null,
+          targetUnits: f.targetUnits,
+        },
+        consultationRecord: {
+          doctor: f.consultationDoctor,
+          unit: f.consultationUnit,
+          record: f.consultationRecord || null,
+          followUpSuggestion: f.followUpSuggestion,
+          followUpOther: f.followUpSuggestion === 'other' ? f.followUpOther : null,
+        },
+      };
+    }
+
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(buildExportData(), null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `consultation_${documentId.value}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function exportXml() {
+      const data = buildExportData();
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<ConsultationRecord>\n${
+        Object.entries(data).map(([k, v]) => toXmlNode(k, v, 1)).join('\n')
+      }\n</ConsultationRecord>`;
+      const blob = new Blob([xml], { type: 'application/xml' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `consultation_${documentId.value}.xml`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function buildFhir() {
+      const f = form.value;
+      const base = 'https://telemedicine.fareastone.com/fhir/StructureDefinition/';
+      const maritalCode = { single: 'S', married: 'M', other: 'OTH', unknown: 'UNK' };
+      const intentMap = { second_opinion: 'proposal', referral: 'order', other: 'plan' };
+      const triagePrio = { '1': 'stat', '2': 'stat', '3': 'asap', '4': 'routine', '5': 'routine' };
+
+      const patient = {
+        resourceType: 'Patient',
+        id: 'patient-001',
+        meta: {
+          profile: ['https://twcore.mohw.gov.tw/ig/twcore/StructureDefinition/Patient-twcore'],
+        },
+        identifier: [
+          { system: 'https://nis.gov.tw/id/national', value: f.idNumber },
+          { system: 'https://telemedicine.fareastone.com/fhir/mrn', value: f.medicalRecordNo },
+        ],
+        name: [{ use: f.isAnonymous ? 'anonymous' : 'official', text: f.patientName }],
+        gender: f.gender || 'unknown',
+        ...(f.birthDate && { birthDate: f.birthDate }),
+        ...(f.maritalStatus && {
+          maritalStatus: { coding: [{ code: maritalCode[f.maritalStatus] || 'UNK' }] },
+        }),
+        ...(f.phone && { telecom: [{ system: 'phone', value: f.phone }] }),
+        ...(f.address && { address: [{ text: f.address, country: 'TW' }] }),
+        ...(f.ecName && {
+          contact: [{
+            name: { text: f.ecName },
+            ...(f.ecRelation && { relationship: [{ text: f.ecRelation }] }),
+            ...(f.ecPhone && { telecom: [{ system: 'phone', value: f.ecPhone }] }),
+          }],
+        }),
+        extension: [
+          ...(f.occupation ? [{ url: `${base}patient-occupation`, valueString: f.occupation }] : []),
+          ...(f.coverageType ? [{ url: `${base}coverage-type`, valueCode: f.coverageType }] : []),
+          ...(f.locality ? [{ url: `${base}locality-type`, valueCode: f.locality }] : []),
+        ],
+      };
+
+      const sr = {
+        resourceType: 'ServiceRequest',
+        id: 'sr-001',
+        meta: {
+          profile: ['https://twcore.mohw.gov.tw/ig/twcore/StructureDefinition/ServiceRequest-twcore'],
+        },
+        identifier: [{
+          system: 'https://telemedicine.fareastone.com/fhir/consultation-id',
+          value: documentId.value,
+        }],
+        status: 'active',
+        intent: intentMap[f.purpose] || 'plan',
+        category: [{
+          coding: [{
+            code: f.category || 'other',
+            display: { general: '一般會診', emergency: '急重症', other: '其他' }[f.category] || '',
+          }],
+        }],
+        ...(f.category === 'general' && f.generalDept && {
+          code: { coding: [{ display: f.generalDept }] },
+        }),
+        ...(f.category === 'emergency' && f.erDept && {
+          code: { coding: [{ display: { er_internal:'急診內科', er_surgery:'急診外傷', er_pediatric:'急診兒科', er_other_dept:'急診其他科' }[f.erDept] || f.erDept }] },
+        }),
+        subject: { reference: 'urn:uuid:patient-001' },
+        authoredOn: submittedAt.value,
+        requester: { display: 'Demo 醫師' },
+        performer: f.targetUnits.map(u => ({ display: u })),
+        reasonCode: f.diagnoses.map(d => ({
+          coding: [{ system: 'http://hl7.org/fhir/sid/icd-10', code: d.code, display: d.name_zh }],
+        })),
+        ...(f.triageLevel && { priority: triagePrio[f.triageLevel] || 'routine' }),
+        note: [
+          { text: f.chiefComplaint },
+          ...(f.notes ? [{ text: f.notes }] : []),
+        ],
+        extension: [
+          { url: `${base}soap-subjective`, valueString: f.subjective },
+          { url: `${base}soap-objective`, valueString: f.objective },
+          { url: `${base}soap-assessment`, valueString: f.assessment },
+          { url: `${base}soap-plan`, valueString: f.plan },
+          {
+            url: `${base}vital-signs`,
+            valueString: JSON.stringify({
+              bpSystolic: f.bpSystolic, bpDiastolic: f.bpDiastolic,
+              heartRate: f.heartRate, respirationRate: f.respirationRate,
+              temperature: f.temperature,
+              gcs: { eye: f.gcsE, verbal: f.gcsV, motor: f.gcsM,
+                total: gcsTotalDisplay.value !== '' ? Number(gcsTotalDisplay.value) : null },
+            }),
+          },
+          ...(f.followUpSuggestion ? [{
+            url: `${base}follow-up-suggestion`,
+            valueString: f.followUpSuggestion + (f.followUpSuggestion === 'other' && f.followUpOther ? `：${f.followUpOther}` : ''),
+          }] : []),
+        ].filter(e => e.valueString),
+      };
+
+      return {
+        resourceType: 'Bundle',
+        meta: {
+          profile: ['https://twcore.mohw.gov.tw/ig/twcore/StructureDefinition/Bundle-twcore'],
+        },
+        identifier: {
+          system: 'https://telemedicine.fareastone.com/fhir/consultation-id',
+          value: documentId.value,
+        },
+        type: 'transaction',
+        timestamp: submittedAt.value,
+        entry: [
+          { fullUrl: 'urn:uuid:patient-001', resource: patient },
+          { fullUrl: 'urn:uuid:sr-001', resource: sr },
+        ],
+      };
+    }
+
+    function copyFhir() {
+      navigator.clipboard.writeText(fhirJsonStr.value).then(() => {
+        $q.notify({ type: 'positive', message: '已複製到剪貼簿', position: 'top-right' });
+      });
+    }
+
+    return {
+      documentId, submittedAt, submitted, showFhirModal, fhirJsonStr,
+      errors, icdSearchVal, icdOptions, form,
+      ageDisplay, gcsTotalDisplay,
+      genderOptions, maritalOptions, localityOptions,
+      coverageOpts, categoryOpts, erCategoryOpts, triageOpts, erDeptOpts, purposeOpts,
+      gcsEOpts, gcsVOpts, gcsMOpts, consultationUnits,
+      filterIcd, addDx, removeDx, onAnonymousChange, onNewbornChange, fillDemo,
+      submitForm, clearForm, deleteForm, goBack,
+      exportJson, exportXml, copyFhir,
+    };
+  },
+};
+
+const app = createApp(App);
+app.use(Quasar, {
+  plugins: { Notify: Quasar.Notify, Dialog: Quasar.Dialog },
+  config: { notify: { position: 'top-right' } },
+});
+app.mount('#app');
+</script>
+</body>
+</html>
