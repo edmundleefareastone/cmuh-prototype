@@ -591,17 +591,22 @@
                     </div>
                   </td>
                   <td class="cat-content-cell">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                      <span class="cat-sub-label">照會科別<span class="req-star" style="margin-left:2px;">*</span></span>
-                      <div style="flex:1;max-width:420px;">
-                        <q-input v-model="form.generalDept" dense outlined
-                          :disable="form.category !== 'general'"
-                          placeholder="例如：內科、外科、耳鼻喉科"
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                      <q-option-group v-model="form.generalDeptRadio" :options="generalDeptOpts"
+                        type="radio" inline dense
+                        :disable="form.category !== 'general'"
+                        @update:model-value="errors.generalDept = ''" />
+                      <div v-if="form.generalDeptRadio === 'other' && form.category === 'general'"
+                        style="margin-top:6px;width:100%;max-width:360px;">
+                        <q-input v-model="form.generalDeptText" dense outlined
+                          placeholder="請輸入科別"
                           :error="!!errors.generalDept" :error-message="errors.generalDept"
                           :hide-bottom-space="!errors.generalDept"
                           @update:model-value="errors.generalDept = ''" />
                       </div>
                     </div>
+                    <div v-if="errors.generalDept && form.generalDeptRadio !== 'other'"
+                      class="error-msg" style="margin-top:4px;">{{ errors.generalDept }}</div>
                   </td>
                 </tr>
 
@@ -979,7 +984,8 @@ const App = {
       occupation: '', coverageType: null, diagnoses: [],
       // Section 3
       category: null,
-      generalDept: '',
+      generalDeptRadio: null,
+      generalDeptText: '',
       erCategory: null, triageLevel: null, erDept: null,
       otherCategoryNote: '',
       chiefComplaint: '',
@@ -1008,6 +1014,13 @@ const App = {
       const today = new Date();
       const yrs = Math.floor((today - birth) / (365.25 * 864e5));
       return yrs >= 0 ? String(yrs) : '';
+    });
+
+    // 一般會診有效照會科別（radio 選其他時取 text）
+    const generalDeptValue = computed(() => {
+      const r = form.value.generalDeptRadio;
+      if (!r) return '';
+      return r === 'other' ? form.value.generalDeptText : r;
     });
 
     const submittedAtDisplay = computed(() => {
@@ -1079,6 +1092,16 @@ const App = {
       { label: '急重症', value: 'emergency' },
       { label: '其他', value: 'other' },
     ];
+    const generalDeptOpts = [
+      { label: '內科',   value: '內科' },
+      { label: '外科',   value: '外科' },
+      { label: '兒科',   value: '兒科' },
+      { label: '婦產科', value: '婦產科' },
+      { label: '皮膚科', value: '皮膚科' },
+      { label: '耳鼻喉科', value: '耳鼻喉科' },
+      { label: '其他',   value: 'other' },
+    ];
+
     const erCategoryOpts = [
       { label: '急診', value: 'er' },
       { label: '急性腦中風', value: 'stroke' },
@@ -1187,8 +1210,8 @@ const App = {
       // category
       if (!f.category) {
         e.category = '請選擇類別';
-      } else if (f.category === 'general' && !f.generalDept.trim()) {
-        e.generalDept = '照會科別為必填';
+      } else if (f.category === 'general' && !generalDeptValue.value.trim()) {
+        e.generalDept = '請選擇照會科別';
       } else if (f.category === 'other' && !f.otherCategoryNote.trim()) {
         e.otherCategoryNote = '請說明類別';
       }
@@ -1285,7 +1308,7 @@ const App = {
         p: '建議進行頭部 CT 掃描、血液常規及生化檢查，並請神經內科或相關科別協助評估。',
       };
 
-      const depts = ['神經內科', '心臟內科', '腸胃科', '內分泌科', '耳鼻喉科', '骨科'];
+      const depts = ['內科', '外科', '兒科', '婦產科', '皮膚科', '耳鼻喉科'];
       const dept = depts[Math.floor(Math.random() * depts.length)];
 
       const bp = { s: 110 + Math.floor(Math.random()*40), d: 65 + Math.floor(Math.random()*25) };
@@ -1321,7 +1344,8 @@ const App = {
         ],
         // Section 3
         category: 'general',
-        generalDept: dept,
+        generalDeptRadio: dept,
+        generalDeptText: '',
         chiefComplaint: demoComplaints[Math.floor(Math.random() * demoComplaints.length)],
         bpSystolic: bp.s,
         bpDiastolic: bp.d,
@@ -1385,7 +1409,7 @@ const App = {
         consultation: {
           category: f.category,
           subCategory: f.category === 'general'
-            ? { department: f.generalDept }
+            ? { department: generalDeptValue.value }
             : f.category === 'emergency'
             ? { emergencyCategory: f.erCategory, triageLevel: f.triageLevel, department: f.erDept }
             : { note: f.otherCategoryNote },
@@ -1496,8 +1520,8 @@ const App = {
             display: { general: '一般會診', emergency: '急重症', other: '其他' }[f.category] || '',
           }],
         }],
-        ...(f.category === 'general' && f.generalDept && {
-          code: { coding: [{ display: f.generalDept }] },
+        ...(f.category === 'general' && generalDeptValue.value && {
+          code: { coding: [{ display: generalDeptValue.value }] },
         }),
         ...(f.category === 'emergency' && f.erDept && {
           code: { coding: [{ display: { er_internal:'急診內科', er_surgery:'急診外傷', er_pediatric:'急診兒科', er_other_dept:'急診其他科' }[f.erDept] || f.erDept }] },
@@ -1565,7 +1589,7 @@ const App = {
       errors, icdSearchVal, icdOptions, form,
       ageDisplay, gcsTotalDisplay,
       genderOptions, maritalOptions, localityOptions,
-      coverageOpts, categoryOpts, erCategoryOpts, triageOpts, erDeptOpts, purposeOpts,
+      coverageOpts, categoryOpts, generalDeptOpts, erCategoryOpts, triageOpts, erDeptOpts, purposeOpts,
       gcsEOpts, gcsVOpts, gcsMOpts, consultationUnits,
       filterIcd, addDx, removeDx, onAnonymousChange, onNewbornChange, fillDemo,
       submitForm, clearForm, deleteForm, goBack,
