@@ -224,7 +224,7 @@
     <span><strong>文件編號：</strong>{{ documentId }}</span>
     <span><strong>申請單位：</strong>北港附醫</span>
     <span><strong>申請醫師：</strong>Demo 醫師</span>
-    <span v-if="submittedAt"><strong>送出時間：</strong>{{ submittedAt }}</span>
+    <span v-if="submittedAt"><strong>送出時間：</strong>{{ submittedAtDisplay }}</span>
   </div>
 
   <!-- ======== Main Body ======== -->
@@ -847,6 +847,12 @@ const App = {
       return yrs >= 0 ? String(yrs) : '';
     });
 
+    const submittedAtDisplay = computed(() => {
+      if (!submittedAt.value) return '';
+      // submittedAt 已是 +08:00，直接取字串前 19 碼並轉成 yyyy-MM-dd HH:mm:ss
+      return submittedAt.value.slice(0, 19).replace('T', ' ');
+    });
+
     const gcsTotalDisplay = computed(() => {
       const e = form.value.gcsE || 0;
       const v = form.value.gcsV || 0;
@@ -1392,7 +1398,7 @@ const App = {
     }
 
     return {
-      documentId, submittedAt, submitted, showFhirModal, fhirJsonStr,
+      documentId, submittedAt, submittedAtDisplay, submitted, showFhirModal, fhirJsonStr,
       errors, icdSearchVal, icdOptions, form,
       ageDisplay, gcsTotalDisplay,
       genderOptions, maritalOptions, localityOptions,
