@@ -128,6 +128,49 @@
       border-bottom: 1px solid #e0e8f0;
     }
 
+    .dx-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .dx-table thead tr {
+      background: #eceff1;
+    }
+    .dx-table th {
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #455a64;
+      border-bottom: 2px solid #cfd8dc;
+      font-size: 13px;
+    }
+    .dx-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eceff1;
+      vertical-align: middle;
+    }
+    .dx-row-primary { background: #f1f8e9; }
+    .dx-row-secondary:nth-child(even) { background: #f5f9ff; }
+    .dx-row-secondary:nth-child(odd) { background: #ffffff; }
+    .dx-label-primary {
+      display: inline-block;
+      background: #388e3c;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .dx-label-secondary {
+      display: inline-block;
+      background: #90a4ae;
+      color: white;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
     .dx-chip {
       display: inline-flex;
       align-items: center;
@@ -385,49 +428,70 @@
 
         <!-- ICD-10 疾病診斷 -->
         <div class="field-wrap">
-          <div class="field-label required" style="margin-bottom:8px;">
+          <div class="field-label required" style="margin-bottom:10px;">
             <span class="req-star">*</span> 疾病診斷（ICD-10）
           </div>
-          <div style="font-size:12px;color:#888;margin-bottom:8px;">輸入代碼或中文名稱搜尋；可新增多筆；第一筆自動為主診斷。</div>
+          <div v-if="errors.diagnoses" class="error-msg" style="margin-bottom:8px;">{{ errors.diagnoses }}</div>
 
-          <!-- Selected chips -->
-          <div v-if="form.diagnoses.length" style="margin-bottom:10px;display:flex;flex-wrap:wrap;">
-            <div v-for="(dx, i) in form.diagnoses" :key="dx.code"
-              :class="['dx-chip', i === 0 ? 'primary' : '']">
-              <span v-if="i === 0" class="dx-badge">主診斷</span>
-              {{ dx.code }} — {{ dx.name_zh }}
-              <q-btn flat round dense size="xs" icon="close" style="margin-left:4px;"
-                @click="removeDx(i)" />
-            </div>
-          </div>
-          <div v-if="errors.diagnoses" class="error-msg">{{ errors.diagnoses }}</div>
+          <!-- Diagnosis Table -->
+          <table class="dx-table" v-if="form.diagnoses.length">
+            <thead>
+              <tr>
+                <th style="width:80px;">診別</th>
+                <th style="width:120px;">ICD-10</th>
+                <th>中文名稱</th>
+                <th>英文名稱</th>
+                <th style="width:60px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(dx, i) in form.diagnoses" :key="dx.code"
+                :class="i === 0 ? 'dx-row-primary' : 'dx-row-secondary'">
+                <td>
+                  <span :class="i === 0 ? 'dx-label-primary' : 'dx-label-secondary'">
+                    {{ i === 0 ? '主診斷' : '次診斷' }}
+                  </span>
+                </td>
+                <td style="font-weight:600;font-family:monospace;font-size:14px;">{{ dx.code }}</td>
+                <td>{{ dx.name_zh }}</td>
+                <td style="color:#607d8b;font-size:13px;">{{ dx.name_en }}</td>
+                <td>
+                  <div>
+                    <q-btn flat dense size="sm" color="negative" label="刪除" @click="removeDx(i)" />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
           <!-- Autocomplete -->
-          <q-select
-            v-model="icdSearchVal"
-            dense outlined
-            use-input hide-selected
-            input-debounce="0"
-            label="輸入 2 字以上搜尋 ICD-10 代碼或中文病名…"
-            :options="icdOptions"
-            option-label="display"
-            @filter="filterIcd"
-            @update:model-value="addDx"
-            style="max-width:640px;">
-            <template #option="scope">
-              <q-item v-bind="scope.itemProps">
-                <q-item-section>
-                  <q-item-label>{{ scope.opt.code }} — {{ scope.opt.name_zh }}</q-item-label>
-                  <q-item-label caption style="font-size:11px;">{{ scope.opt.name_en }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </template>
-            <template #no-option>
-              <q-item>
-                <q-item-section class="text-grey">無符合結果，請輸入 2 字以上</q-item-section>
-              </q-item>
-            </template>
-          </q-select>
+          <div style="margin-top:10px;">
+            <q-select
+              v-model="icdSearchVal"
+              dense outlined
+              use-input hide-selected
+              input-debounce="0"
+              label="輸入 2 字以上搜尋 ICD-10 代碼或中文病名，新增診斷…"
+              :options="icdOptions"
+              option-label="display"
+              @filter="filterIcd"
+              @update:model-value="addDx"
+              style="max-width:640px;">
+              <template #option="scope">
+                <q-item v-bind="scope.itemProps">
+                  <q-item-section>
+                    <q-item-label>{{ scope.opt.code }} — {{ scope.opt.name_zh }}</q-item-label>
+                    <q-item-label caption style="font-size:11px;">{{ scope.opt.name_en }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
+              <template #no-option>
+                <q-item>
+                  <q-item-section class="text-grey">無符合結果，請輸入 2 字以上</q-item-section>
+                </q-item>
+              </template>
+            </q-select>
+          </div>
         </div>
       </div>
     </div>
