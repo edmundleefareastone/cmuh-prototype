@@ -72,7 +72,7 @@ const ICD10_LIST = [
 | 8 | 年齡 | 唯讀 text | — | 由出生日期自動計算（歲），不可手動輸入 |
 | 9 | 性別 | select | — | 選項：男 / 女 / 其他 / 未知 |
 | 10 | 婚姻狀況 | select | — | 選項：未婚 / 已婚 / 其他 / 未知 |
-| 11 | 區域 | select | — | 選項：本地 / 外來 / 未知 |
+| 11 | 區域 | select | — | 選項：**未知 / 本地 / 外來**（此順序） |
 | 12 | 初診日期 | date picker | — | |
 | 13 | 初診科別 | text input | — | |
 | 14 | 電話 | text input | — | |
@@ -89,29 +89,23 @@ const ICD10_LIST = [
 |---|----------|----------|------|------|
 | 19 | 職業 | text input | — | |
 | 20 | 就醫身份別 | radio | — | 選項：健保 / 自費 / 其他 |
-| 21 | 疾病診斷（ICD-10） | autocomplete（多筆） | ✅ | 輸入代碼或中文搜尋 icd10_common.js；可新增多筆；第一筆自動標記為「主診斷」；顯示格式：`J30.0 - 血管舒縮性鼻炎` |
+| 21 | 疾病診斷（ICD-10） | **table + autocomplete 搜尋列** | ✅ | 已選診斷以 table 呈現（欄位：診別、ICD-10 代碼、中文名稱、英文名稱、刪除按鈕）；搜尋列置於 table 下方，輸入 2 字以上觸發；第一筆自動標記「主診斷」（綠底 badge），其餘為「次診斷」（灰底 badge）；三種比對：`code` 前綴 + `name_zh` 包含 + `name_en` 包含 |
 
 ---
 
 ### Section 3：會診說明（申請會診單位填寫）
 
-#### 3-1 類別（條件展開，必填）
+#### 3-1 類別（全覽 table，必填）
 
-選項為互斥 radio，依選擇展開不同子選項：
+採用**全覽 table 結構（cat-table）**，三列常駐顯示，不使用 v-if 隱藏。左側「*類別」label 欄 rowspan 跨三列；選中列高亮，非選中列子欄位自動 `:disable`。
 
-**一般會診**（選擇後展開）：
-- 照會科別（**text input，必填**）：placeholder「請輸入科別，例如：內科、外科、耳鼻喉科」；自由輸入文字，不限制選項
+| 列 | 主 radio | 子欄位 |
+|----|----------|--------|
+| 一般會診 | `form.category === 'general'` | **照會科別（radio 固定選項，必填）**：內科 / 外科 / 兒科 / 婦產科 / 皮膚科 / 耳鼻喉科 / **其他**（選「其他」展開 text input）；資料欄位：`generalDeptRadio`（選項值）+ `generalDeptText`（其他時文字）；computed `generalDeptValue` 取最終有效科別名稱 |
+| 急重症 | `form.category === 'emergency'` | 以 `cat-sub-table` 嵌套三列：① 急診分類（radio）：急診 / 急性腦中風 / 緊急外傷 / 心肌梗塞 / 其他；② 檢傷分類（radio）：第一～五級；③ 照會科別（radio）：急診內科 / 急診外傷 / 急診兒科 / 急診其他科 |
+| 其他 | `form.category === 'other'` | 說明文字（text input，必填），`otherCategoryNote` |
 
-**急重症**（選擇後展開）：
-- 急診分類（radio，單選）：急診 / 急性腦中風 / 緊急外傷 / 心肌梗塞 / 其他
-- 檢傷分類（radio，單選）：第一級 / 第二級 / 第三級 / 第四級 / 第五級
-- 照會科別（radio，單選）：急診內科 / 急診外傷 / 急診兒科 / 急診其他科
-
-**其他**（選擇後展開）：
-- 說明文字（text input，必填）：placeholder「類別為其他時，此欄位必填」
-
-驗證：類別未選擇時，送出顯示「請選擇類別」錯誤訊息（紅框）。
-**一般會診選擇後，照會科別文字欄位必填，不得為空**（否則無法送出）。
+驗證：類別未選擇 → 「請選擇類別」；一般會診 `generalDeptValue` 為空 → 「請選擇照會科別」；其他 `otherCategoryNote` 為空 → 顯示錯誤。
 
 #### 3-2 病況描述（必填）
 
@@ -219,9 +213,11 @@ FHIR 補充：後續建議處理對應 `ServiceRequest.extension[5]`，url: `htt
 | 返回 | 白底黑框 | `window.history.back()`（Demo 無實際效果） |
 | 清除表單 | 白底黑框 | 清空所有欄位，重新產生文件編號，彈出確認 dialog |
 | 會診單刪除 | 紅色 | 彈出確認 dialog，確認後清空並顯示「已刪除」toast |
-| 確認送出 | 藍色 | 執行全欄位 validation；通過後顯示三個匯出按鈕（JSON / XML / FHIR R4 預覽）並顯示成功 toast |
+| **填入 Demo 資料** | **紫色（outline）** | 從 4 組預設病患資料中隨機挑選，一鍵填入所有必填與選填欄位（含診斷、生命徵象、SOAP）；每次點擊結果不同 |
+| ← spacer → | — | 將右側按鈕推至最右 |
+| 確認送出 | 藍色 | 執行全欄位 validation；通過後 `submitted = true`，顯示三個匯出按鈕並顯示成功 toast；按鈕切換為「已送出 ✓」並 disable |
 | 匯出 JSON | 綠色（送出後才顯示） | 下載 `consultation_{文件編號}.json` |
-| 匯出 XML | 綠色（送出後才顯示） | 下載 `consultation_{文件編號}.xml` |
+| 匯出 XML | 綠色（送出後才顯示） | 下載縮排格式化的 `consultation_{文件編號}.xml` |
 | FHIR R4 預覽 | 青綠色（送出後才顯示） | 開啟 Modal，顯示格式化 JSON，右上角複製按鈕 |
 
 ---
@@ -333,7 +329,13 @@ FHIR 補充：後續建議處理對應 `ServiceRequest.extension[5]`，url: `htt
 ```json
 {
   "resourceType": "Bundle",
-  "id": "20260407-143022-A123456789",
+  "meta": {
+    "profile": ["https://twcore.mohw.gov.tw/ig/twcore/StructureDefinition/Bundle-twcore"]
+  },
+  "identifier": {
+    "system": "https://telemedicine.fareastone.com/fhir/consultation-id",
+    "value": "20260407-143022-A123456789"
+  },
   "type": "transaction",
   "timestamp": "2026-04-07T14:30:22+08:00",
   "entry": [
@@ -405,7 +407,7 @@ FHIR 補充：後續建議處理對應 `ServiceRequest.extension[5]`，url: `htt
 | 出生日期 | 非空 + 不可為未來日期 |
 | 疾病診斷 | 至少一筆 |
 | 類別 | 必須選擇（一般/急重症/其他之一） |
-| 照會科別（一般會診時） | 非空文字（text input，不得為空白） |
+| 照會科別（一般會診時） | `generalDeptRadio` 必須選擇；若選「其他」則 `generalDeptText` 不得為空 |
 | 類別說明（其他時） | 非空 |
 | 病況描述 | 非空 |
 | 會診目的 | 必須選擇 |
@@ -418,12 +420,11 @@ FHIR 補充：後續建議處理對應 `ServiceRequest.extension[5]`，url: `htt
 
 1. **出生日期 → 年齡自動計算**：選擇日期後立即計算，公式：`Math.floor((今天 - 出生日期) / 365.25 天)`
 2. **textarea 字數計數**：每個 textarea 右下角顯示 `{已輸入} / {上限}` 字數，超過上限時字數文字變紅
-3. **ICD-10 autocomplete**：
-   - 輸入 2 字以上觸發搜尋
-   - 搜尋範圍：`code` 前綴比對 + `name_zh` 包含比對
-   - 下拉選單顯示：`J30.0 - 血管舒縮性鼻炎`
-   - 已選項目以 tag chip 顯示，可個別刪除
-   - 第一筆自動加上「主診斷」badge
+3. **ICD-10 診斷 table**：
+   - 已選診斷以 table 呈現，欄位：診別 badge / ICD-10 / 中文名稱 / 英文名稱 / 刪除按鈕
+   - 搜尋列置於 table 下方，輸入 2 字以上觸發
+   - 搜尋範圍：`code` 前綴 + `name_zh` 包含 + `name_en` 包含
+   - 第一筆自動為「主診斷」（綠底），其餘為「次診斷」（灰底）
 4. **GCS 自動加總**：E + V + M 任一改變時，自動更新 GCS 總分顯示
 5. **清除確認 dialog**：使用瀏覽器原生 `confirm()`，確認後清空全部 reactive data，重新產生文件編號
 6. **送出後按鈕狀態**：確認送出成功後，「確認送出」按鈕變為已送出（disabled + 打勾圖示），並顯示三個匯出按鈕
@@ -433,7 +434,22 @@ FHIR 補充：後續建議處理對應 `ServiceRequest.extension[5]`，url: `htt
 
 ## 注意事項
 
+### ⚠️ Quasar UMD DOM Template 已知限制
+
+在 Quasar UMD + Vue 3 DOM template 中，**相鄰 Quasar 元件**（不論何種組合）會因瀏覽器先解析 HTML 而互相嵌套。
+
+**強制規則**：凡是兩個 Quasar 元件相鄰，一律各自套 `<div>` 隔開：
+- 多個同類選項（radio / checkbox）→ 改用 `q-option-group` + options 陣列
+- `q-input` 後接 `q-checkbox` → 各自套 `<div>`
+- `q-btn` 並排 → 各自套 `<div>`
+- `q-input` 底部與下方元件間距過大 → 加 `:hide-bottom-space="!errors.xxx"`
+
+詳細範例見 `.claude/skills/quasar-umd-radio/SKILL.md`。
+
+---
+
 - 所有日期格式輸出統一為 **ISO 8601**（`YYYY-MM-DD` 或 `YYYY-MM-DDTHH:mm:ss+08:00`）
+- **會診提出時間顯示格式**：`yyyy-MM-dd HH:mm:ss`（+08:00 時區），ISO 8601 格式僅用於 JSON/XML/FHIR 匯出
 - JSON / XML 匯出使用 `Blob` + `URL.createObjectURL()` 觸發瀏覽器下載
 - 檔案命名：`consultation_20260407-143022-A123456789.json` / `.xml`
 - FHIR 預覽 Modal 中的 JSON 使用 `JSON.stringify(obj, null, 2)` 格式化，並支援一鍵複製（`navigator.clipboard.writeText()`）
@@ -443,6 +459,17 @@ FHIR 補充：後續建議處理對應 `ServiceRequest.extension[5]`，url: `htt
 
 ---
 
-*本規格文件版本：v1.1 — 2026-04-07*
-*異動說明：病歷號碼改為必填；一般會診照會科別改為文字 input；新增 Section 5 遠距端會診紀錄區塊*
+*本規格文件版本：v1.2 — 2026-04-08*
+*異動說明（v1.2）：*
+- *ICD-10 診斷改為 table 呈現（診別/代碼/中文/英文/刪除）*
+- *Section 3-1 類別改為全覽 table 結構（三列常駐）*
+- *一般會診照會科別從自由文字改為固定 radio 選項（內科/外科/兒科/婦產科/皮膚科/耳鼻喉科/其他）*
+- *一般會診資料欄位：`generalDeptRadio` + `generalDeptText` + computed `generalDeptValue`*
+- *Action Bar 新增「填入 Demo 資料」按鈕（紫色）*
+- *區域選項排序改為：未知 / 本地 / 外來*
+- *FHIR Bundle 加入 TW Core `meta.profile`；`id` 改為 `identifier`*
+- *Patient / ServiceRequest resource 加入 TW Core `meta.profile`*
+- *送出時間顯示格式改為 `yyyy-MM-dd HH:mm:ss`*
+- *XML 匯出改為縮排格式（人類可讀）*
+- *新增 Quasar UMD DOM template 相鄰元件嵌套問題說明與解法*
 *用途：遠傳遠距醫療 × 中附醫 會診解決方案 Demo 報告*
