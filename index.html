@@ -1280,7 +1280,7 @@ const App = {
         { name: '王大明', id: 'A123456789', birth: '1975-08-15', gender: 'male',   mrn: 'P20241001', phone: '0912-345-678', addr: '雲林縣北港鎮中山路88號', ecName: '王小美', ecRel: '配偶',   ecPhone: '0923-456-789', occupation: '農業', marital: 'married' },
         { name: '林淑芬', id: 'B234567890', birth: '1982-03-22', gender: 'female', mrn: 'P20241088', phone: '0936-111-222', addr: '嘉義縣朴子市中正路12號', ecName: '林建志', ecRel: '子女',   ecPhone: '0987-654-321', occupation: '教師', marital: 'married' },
         { name: '陳志豪', id: 'C345678901', birth: '1960-11-08', gender: 'male',   mrn: 'P20241155', phone: '0955-888-777', addr: '彰化縣員林市員東路5號',   ecName: '陳美華', ecRel: '配偶',   ecPhone: '0966-777-888', occupation: '退休', marital: 'married' },
-        { name: '張雅婷', id: 'D456789012', birth: '1995-06-30', gender: 'female', mrn: 'P20241203', phone: '0901-234-567', addr: '台中市西屯區台灣大道三段200號', ecName: '張國強', ecRel: '父母', ecPhone: '0922-333-444', occupation: '上班族', marital: 'single' },
+        { name: '張雅婷', id: 'D156789012', birth: '1995-06-30', gender: 'female', mrn: 'P20241203', phone: '0901-234-567', addr: '台中市西屯區台灣大道三段200號', ecName: '張國強', ecRel: '父母', ecPhone: '0922-333-444', occupation: '上班族', marital: 'single' },
       ];
       const p = demoPatients[Math.floor(Math.random() * demoPatients.length)];
 
@@ -1476,17 +1476,26 @@ const App = {
         meta: {
           profile: ['https://twcore.mohw.gov.tw/ig/twcore/StructureDefinition/Patient-twcore'],
         },
+        active: true,
         identifier: [
-          { system: 'https://nis.gov.tw/id/national', value: f.idNumber },
-          { system: 'https://telemedicine.fareastone.com/fhir/mrn', value: f.medicalRecordNo },
+          {
+            type: { coding: [{ system: 'http://terminology.hl7.org/CodeSystem/v2-0203', code: f.isForeigner ? 'PPN' : 'NI' }] },
+            system: f.isForeigner ? 'http://www.immigration.gov.tw' : 'http://www.moi.gov.tw',
+            value: f.idNumber,
+          },
+          {
+            type: { coding: [{ system: 'http://terminology.hl7.org/CodeSystem/v2-0203', code: 'MR' }] },
+            system: 'https://telemedicine.fareastone.com/fhir/mrn',
+            value: f.medicalRecordNo,
+          },
         ],
         name: [{ use: f.isAnonymous ? 'anonymous' : 'official', text: f.patientName }],
         gender: f.gender || 'unknown',
         ...(f.birthDate && { birthDate: f.birthDate }),
         ...(f.maritalStatus && {
-          maritalStatus: { coding: [{ code: maritalCode[f.maritalStatus] || 'UNK' }] },
+          maritalStatus: { coding: [{ system: 'http://terminology.hl7.org/CodeSystem/v3-MaritalStatus', code: maritalCode[f.maritalStatus] || 'UNK' }] },
         }),
-        ...(f.phone && { telecom: [{ system: 'phone', value: f.phone }] }),
+        ...(f.phone && { telecom: [{ system: 'phone', use: 'mobile', value: f.phone }] }),
         ...(f.address && { address: [{ text: f.address, country: 'TW' }] }),
         ...(f.ecName && {
           contact: [{
@@ -1572,8 +1581,8 @@ const App = {
         type: 'transaction',
         timestamp: submittedAt.value,
         entry: [
-          { fullUrl: 'urn:uuid:patient-001', resource: patient },
-          { fullUrl: 'urn:uuid:sr-001', resource: sr },
+          { fullUrl: 'urn:uuid:patient-001', resource: patient, request: { method: 'POST', url: 'Patient' } },
+          { fullUrl: 'urn:uuid:sr-001', resource: sr, request: { method: 'POST', url: 'ServiceRequest' } },
         ],
       };
     }
