@@ -307,6 +307,11 @@
       margin-bottom: 14px;
       border-left: 3px solid #90a4ae;
     }
+
+  @media print {
+    .action-bar { display: none !important; }
+    body { padding-bottom: 0 !important; }
+  }
   </style>
 </head>
 <body>
@@ -872,6 +877,8 @@
       <div><q-btn color="positive" icon="download" label="匯出 JSON" @click="exportJson" /></div>
       <div><q-btn color="positive" icon="download" label="匯出 XML" @click="exportXml" /></div>
       <div><q-btn style="background:#00897B;color:white;" icon="preview" label="FHIR R4 預覽" @click="showFhirModal = true" /></div>
+      <div><q-btn style="background:#5C6BC0;color:white;" icon="picture_as_pdf" label="匯出 PDF" @click="exportPdf" /></div>
+      <div><q-btn style="background:#546E7A;color:white;" icon="print" label="列印" @click="printForm" /></div>
     </template>
   </div>
 
@@ -900,6 +907,7 @@
 <script src="icd10_common.js"></script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/quasar@2/dist/quasar.umd.prod.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 const { createApp, ref, computed } = Vue;
 
@@ -1463,6 +1471,24 @@ const App = {
       URL.revokeObjectURL(a.href);
     }
 
+    function printForm() {
+      window.print();
+    }
+
+    function exportPdf() {
+      const bar = document.querySelector('.action-bar');
+      bar.style.display = 'none';
+      html2pdf().set({
+        margin: 10,
+        filename: `consultation_${documentId.value}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      }).from(document.getElementById('app')).save().then(() => {
+        bar.style.display = '';
+      });
+    }
+
     function buildFhir() {
       const f = form.value;
       const base = 'https://telemedicine.fareastone.com/fhir/StructureDefinition/';
@@ -1602,7 +1628,7 @@ const App = {
       gcsEOpts, gcsVOpts, gcsMOpts, consultationUnits,
       filterIcd, addDx, removeDx, onAnonymousChange, onNewbornChange, fillDemo,
       submitForm, clearForm, deleteForm, goBack,
-      exportJson, exportXml, copyFhir,
+      exportJson, exportXml, copyFhir, printForm, exportPdf,
     };
   },
 };
