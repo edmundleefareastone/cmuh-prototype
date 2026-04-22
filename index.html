@@ -41,8 +41,6 @@
     .doc-id-bar strong { color: #bf360c; }
 
     .page-body {
-      max-width: 1600px;
-      margin: 0 auto;
       padding: 12px 24px;
     }
 
@@ -82,11 +80,13 @@
     .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .form-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .form-grid-vitals { display: grid; grid-template-columns: repeat(5, minmax(0, 190px)); gap: 10px; justify-content: start; }
     .col-span-2 { grid-column: span 2; }
     .col-span-3 { grid-column: span 3; }
     .col-span-5 { grid-column: span 5; }
     @media (max-width: 1400px) {
-      .form-grid-5 { grid-template-columns: repeat(3, 1fr); }
+      .form-grid-5 { grid-template-columns: repeat(3, minmax(0, 220px)); }
+      .form-grid-vitals { grid-template-columns: repeat(3, minmax(0, 190px)); }
     }
 
     .field-wrap { display: flex; flex-direction: column; }
@@ -302,6 +302,23 @@
     }
 
     /* section inline sub-header */
+    .main-layout {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .main-left, .main-right {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-left > .section-card,
+    .main-right > .section-card { margin-bottom: 0; flex: 1; }
+    @media (max-width: 1200px) {
+      .main-layout { flex-direction: column; }
+    }
+
     .inline-sub-header {
       background: #f0f4f8;
       border-radius: 4px;
@@ -343,11 +360,14 @@
   <!-- ======== Main Body ======== -->
   <div class="page-body">
 
+    <div class="main-layout">
+      <div class="main-left">
+
     <!-- ===== Section 1: 病患資訊 ===== -->
     <div class="section-card">
       <div class="section-header">
         <span class="material-icons" style="font-size:18px;color:#1976D2;">person</span>
-        Section 1：病患資訊
+        病患資訊
         <span class="badge">申請會診單位填寫</span>
       </div>
       <div class="section-body">
@@ -471,17 +491,7 @@
           </div>
 
         </div>
-      </div>
-    </div>
 
-    <!-- ===== Section 2: 病人生活史 ===== -->
-    <div class="section-card">
-      <div class="section-header">
-        <span class="material-icons" style="font-size:18px;color:#1976D2;">history</span>
-        Section 2：病人生活史
-        <span class="badge">申請會診單位填寫</span>
-      </div>
-      <div class="section-body">
         <div class="form-grid" style="margin-bottom:12px;">
           <!-- 職業 -->
           <div class="field-wrap">
@@ -546,7 +556,7 @@
               option-label="display"
               @filter="filterIcd"
               @update:model-value="addDx"
-              style="max-width:640px;">
+              >
               <template #option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section>
@@ -563,21 +573,61 @@
             </q-select>
           </div>
         </div>
+
+
+        <!-- 3-6 會診目的 -->
+        <div>
+
+          <div class="form-grid">
+            <div class="field-wrap">
+              <div class="field-label required" style="margin-bottom:10px;">
+                <span class="req-star">*</span> 目的
+              </div>
+              <q-option-group v-model="form.purpose" :options="purposeOpts" type="radio" inline dense
+                @update:model-value="errors.purpose = ''" />
+              <div v-if="errors.purpose" class="error-msg">{{ errors.purpose }}</div>
+              <div v-if="form.purpose === 'other'" style="margin-top:8px;">
+                <q-input v-model="form.purposeOther" dense outlined
+                  placeholder="請說明會診目的"
+                  :error="!!errors.purposeOther" :error-message="errors.purposeOther"
+                  @update:model-value="errors.purposeOther = ''" />
+              </div>
+            </div>
+
+            <div class="field-wrap col-span-2">
+              <div class="field-label required" style="margin-bottom:6px;">
+                <span class="req-star">*</span> 會診單位
+              </div>
+              <q-select
+                v-model="form.targetUnits"
+                multiple dense outlined
+                use-chips
+                :options="consultationUnits"
+                :error="!!errors.targetUnits" :error-message="errors.targetUnits"
+                @update:model-value="errors.targetUnits = ''"
+                label="選擇會診單位（可多選）" />
+            </div>
+          </div>
+        </div>
+
       </div>
-    </div>
+    </div><!-- end section-card 病患資訊 -->
+
+      </div><!-- end main-left -->
+      <div class="main-right">
 
     <!-- ===== Section 3: 會診說明 ===== -->
     <div class="section-card">
       <div class="section-header">
         <span class="material-icons" style="font-size:18px;color:#1976D2;">description</span>
-        Section 3：會診說明
+        會診說明
         <span class="badge">申請會診單位填寫</span>
       </div>
       <div class="section-body">
 
-        <!-- 3-1 類別 -->
+        <!-- 類別 -->
         <div style="margin-bottom:14px;">
-          <div class="inline-sub-header">3-1 類別</div>
+
           <div v-if="errors.category" class="error-msg" style="margin-bottom:8px;">{{ errors.category }}</div>
 
           <div class="cat-table-wrap">
@@ -680,7 +730,7 @@
 
         <!-- 3-2 病況描述 -->
         <div style="margin-bottom:14px;">
-          <div class="inline-sub-header">3-2 病況描述</div>
+
           <div class="field-label required" style="margin-bottom:6px;">
             <span class="req-star">*</span> 病況描述
           </div>
@@ -694,8 +744,8 @@
 
         <!-- 3-3 生命徵象 -->
         <div style="margin-bottom:14px;">
-          <div class="inline-sub-header">3-3 生命徵象</div>
-          <div class="form-grid-5">
+          <div class="inline-sub-header">生命徵象</div>
+          <div class="form-grid-vitals">
             <div class="field-wrap">
               <div class="field-label">血壓 — 收縮壓</div>
               <q-input v-model.number="form.bpSystolic" type="number" dense outlined suffix="mmHg" />
@@ -739,9 +789,23 @@
           </div>
         </div>
 
-        <!-- 3-4 SOAP -->
+
+      </div>
+    </div>
+
+      </div><!-- end main-right -->
+    </div><!-- end main-layout -->
+
+    <!-- ===== SOAP 紀錄 ＆ 備註（全寬）===== -->
+    <div class="section-card">
+      <div class="section-header">
+        <span class="material-icons" style="font-size:18px;color:#1976D2;">edit_note</span>
+        SOAP 紀錄 ＆ 備註
+        <span class="badge">申請會診單位填寫</span>
+      </div>
+      <div class="section-body">
         <div style="margin-bottom:14px;">
-          <div class="inline-sub-header">3-4 SOAP 紀錄</div>
+
           <div class="form-grid-2">
             <div class="field-wrap">
               <div class="field-label">S — 主訴（Subjective）</div>
@@ -773,10 +837,8 @@
             </div>
           </div>
         </div>
+        <div>
 
-        <!-- 3-5 備註 -->
-        <div style="margin-bottom:14px;">
-          <div class="inline-sub-header">3-5 備註</div>
           <div class="field-wrap">
             <div class="field-label">備註</div>
             <q-input v-model="form.notes" type="textarea" dense outlined rows="3" />
@@ -785,42 +847,6 @@
             </div>
           </div>
         </div>
-
-        <!-- 3-6 會診目的 -->
-        <div>
-          <div class="inline-sub-header">3-6 會診目的</div>
-          <div class="form-grid">
-            <div class="field-wrap">
-              <div class="field-label required" style="margin-bottom:10px;">
-                <span class="req-star">*</span> 目的
-              </div>
-              <q-option-group v-model="form.purpose" :options="purposeOpts" type="radio" inline dense
-                @update:model-value="errors.purpose = ''" />
-              <div v-if="errors.purpose" class="error-msg">{{ errors.purpose }}</div>
-              <div v-if="form.purpose === 'other'" style="margin-top:8px;">
-                <q-input v-model="form.purposeOther" dense outlined
-                  placeholder="請說明會診目的"
-                  :error="!!errors.purposeOther" :error-message="errors.purposeOther"
-                  @update:model-value="errors.purposeOther = ''" />
-              </div>
-            </div>
-
-            <div class="field-wrap col-span-2">
-              <div class="field-label required" style="margin-bottom:6px;">
-                <span class="req-star">*</span> 會診單位
-              </div>
-              <q-select
-                v-model="form.targetUnits"
-                multiple dense outlined
-                use-chips
-                :options="consultationUnits"
-                :error="!!errors.targetUnits" :error-message="errors.targetUnits"
-                @update:model-value="errors.targetUnits = ''"
-                label="選擇會診單位（可多選）" />
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
 
@@ -828,7 +854,7 @@
     <div class="section-card section-readonly">
       <div class="section-header">
         <span class="material-icons" style="font-size:18px;color:#607d8b;">rate_review</span>
-        Section 5：會診紀錄
+        會診紀錄
         <span class="badge">指導端填寫</span>
         <span style="font-size:12px;color:#777;font-weight:400;margin-left:4px;">（申請端唯讀）</span>
       </div>
@@ -844,20 +870,18 @@
           </div>
           <div></div>
 
-          <div class="field-wrap col-span-3">
-            <div class="field-label">會診紀錄（唯讀）</div>
-            <q-input
-              :model-value="form.consultationRecord || '（待指導端填寫）'"
-              type="textarea" dense outlined readonly rows="4" class="readonly-field" />
-          </div>
-
-          <div class="field-wrap col-span-3">
-            <div class="field-label">後續建議處理（唯讀）</div>
-            <div style="padding:10px 14px;border:1px solid #e0e0e0;border-radius:4px;background:#eeeeee;font-size:13px;color:#777;">
-              {{ form.followUpSuggestion || '（待指導端填寫）' }}
-            </div>
-          </div>
         </div>
+        <div class="field-wrap" style="margin-top:10px;">
+          <div class="field-label">會診紀錄（唯讀）</div>
+          <q-input
+            :model-value="form.consultationRecord || '（待指導端填寫）'"
+            type="textarea" dense outlined readonly rows="4" class="readonly-field" />
+        </div>
+        <div class="field-wrap" style="margin-top:10px;">
+          <div class="field-label">後續建議處理（唯讀）</div>
+          <div style="padding:10px 14px;border:1px solid #e0e0e0;border-radius:4px;background:#eeeeee;font-size:13px;color:#777;">
+            {{ form.followUpSuggestion || '（待指導端填寫）' }}
+          </div>
       </div>
     </div>
 
