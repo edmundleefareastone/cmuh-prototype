@@ -863,18 +863,18 @@
       <div class="section-body section-readonly">
         <div class="form-grid" style="margin-bottom:10px;">
           <div class="field-wrap">
-            <div class="field-label">會診醫師</div>
+            <div class="field-label">接受會診醫師</div>
             <q-input :model-value="form.consultationDoctor" dense outlined readonly class="readonly-field" />
           </div>
           <div class="field-wrap">
-            <div class="field-label">會診單位</div>
+            <div class="field-label">接受會診單位</div>
             <q-input :model-value="form.consultationUnit" dense outlined readonly class="readonly-field" />
           </div>
           <div></div>
 
         </div>
         <div class="field-wrap" style="margin-top:10px;">
-          <div class="field-label">會診紀錄（唯讀）</div>
+          <div class="field-label">會診回覆紀錄（唯讀）</div>
           <q-input
             :model-value="form.consultationRecord || '（待指導端填寫）'"
             type="textarea" dense outlined readonly rows="4" class="readonly-field" />
